@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as cheerio from 'cheerio';
+import { load } from 'cheerio';
 
 const BASE_URL = 'https://w1.anime4up.rest';
 
@@ -21,7 +21,7 @@ const DEFAULT_HEADERS = {
 // --- Parsers ---
 
 function parseAnimeGrid(html) {
-  const $ = cheerio.load(html);
+  const $ = load(html);
   const results = [];
 
   $('.anime-card-themex').each((i, el) => {
@@ -78,7 +78,7 @@ export async function search(query) {
 export async function getDetails(slug) {
   const url = `${BASE_URL}/anime/${slug}`;
   const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  const $ = cheerio.load(data);
+  const $ = load(data);
 
   const title = $('.anime-details-title').text().trim() || $('h1').first().text().trim();
   let poster = $('.anime-thumbnail img').attr('src') || $('.img-responsive').attr('src') || '';
@@ -149,7 +149,7 @@ export async function resolveLauncherStream({ id, episode }) {
   if (!epData) throw new Error(`Episode not found`);
 
   const { data } = await axios.get(epData.url, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  const $ = cheerio.load(data);
+  const $ = load(data);
   const iframes = [];
 
   $('iframe').each((i, el) => {
