@@ -112,13 +112,14 @@ export default function Search() {
       const data = await searchMulti(q, pageNum)
       if (append) {
         setResults(prev => {
-          const { merged, newCount } = mergeResults(prev, data.results)
+          const { merged, newCount } = mergeResults(prev, Array.isArray(data) ? data : [])
           if (newCount === 0) setHasMore(false)
           return merged
         })
       } else {
-        setResults(data.results)
-        setHasMore(data.results.length > 0)
+        const resultsArray = Array.isArray(data) ? data : []
+        setResults(resultsArray)
+        setHasMore(resultsArray.length > 0)
       }
     } catch (err) {
       console.error(err)
@@ -133,13 +134,14 @@ export default function Search() {
       const data = await getPopular(pageNum)
       if (append) {
         setResults(prev => {
-          const { merged, newCount } = mergeResults(prev, data.results)
+          const { merged, newCount } = mergeResults(prev, Array.isArray(data) ? data : [])
           if (newCount === 0) setHasMore(false)
           return merged
         })
       } else {
-        setResults(data.results)
-        setHasMore(data.results.length > 0)
+        const resultsArray = Array.isArray(data) ? data : []
+        setResults(resultsArray)
+        setHasMore(resultsArray.length > 0)
       }
     } catch (err) {
       console.error(err)
@@ -154,13 +156,14 @@ export default function Search() {
       const data = await discoverByGenre('anime', genreSlug, pageNum)
       if (append) {
         setResults(prev => {
-          const { merged, newCount } = mergeResults(prev, data.results)
+          const { merged, newCount } = mergeResults(prev, Array.isArray(data) ? data : [])
           if (newCount === 0) setHasMore(false)
           return merged
         })
       } else {
-        setResults(data.results)
-        setHasMore(data.results.length > 0)
+        const resultsArray = Array.isArray(data) ? data : []
+        setResults(resultsArray)
+        setHasMore(resultsArray.length > 0)
       }
     } catch (err) {
       console.error(err)
