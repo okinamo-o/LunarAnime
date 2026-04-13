@@ -13,9 +13,8 @@ export default function Hero() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await getTrending()
-        // Use poster as backdrop since anime4up doesn't provide separate backdrops
-        const filtered = (data.results || []).filter(m => m.poster).slice(0, 6)
+        const trendData = await getTrending()
+        const filtered = (Array.isArray(trendData) ? trendData : []).filter(m => m.poster).slice(0, 6)
         setMovies(filtered)
       } catch (err) {
         console.error('Failed to load hero:', err)

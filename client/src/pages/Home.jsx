@@ -26,8 +26,8 @@ export default function Home() {
         getTrending(),
         getPopular()
       ])
-      setTrending(trendData.results || [])
-      setPopular(popData.results || [])
+      setTrending(Array.isArray(trendData) ? trendData : [])
+      setPopular(Array.isArray(popData) ? popData : [])
 
       if (user) {
         try {
