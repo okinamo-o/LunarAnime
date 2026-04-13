@@ -1,5 +1,5 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 const BASE_URL = 'https://w1.anime4up.rest';
 
@@ -58,24 +58,24 @@ function parseAnimeGrid(html) {
   return results;
 }
 
-async function fetchTrending() {
+export async function fetchTrending() {
   const { data } = await axios.get(BASE_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
   return parseAnimeGrid(data).slice(0, 15);
 }
 
-async function fetchPopular() {
+export async function fetchPopular() {
   const { data } = await axios.get(BASE_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
   const results = parseAnimeGrid(data);
   return results.length > 15 ? results.slice(15, 30) : results;
 }
 
-async function search(query) {
+export async function search(query) {
   const url = `${BASE_URL}/?search_param=animes&s=${encodeURIComponent(query)}`;
   const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
   return parseAnimeGrid(data);
 }
 
-async function getDetails(slug) {
+export async function getDetails(slug) {
   const url = `${BASE_URL}/anime/${slug}`;
   const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
   const $ = cheerio.load(data);
@@ -115,7 +115,6 @@ async function getDetails(slug) {
   }
 
   let allEpisodes = extractEpisodes($);
-  // (Simplified pagination for serverless to avoid timeouts - just fetch first page by default or handle carefully)
   allEpisodes.sort((a, b) => a.episodeNumber - b.episodeNumber);
 
   const genres = [];
@@ -136,7 +135,7 @@ async function getDetails(slug) {
   };
 }
 
-async function discover(category, slugString, page = 1) {
+export async function discover(category, slugString, page = 1) {
     const slugs = String(slugString).split(',');
     let url = `${BASE_URL}/${category}/${slugs[0]}/`;
     if (page > 1) url += `?page=${page}`;
@@ -144,7 +143,7 @@ async function discover(category, slugString, page = 1) {
     return parseAnimeGrid(data);
 }
 
-async function resolveLauncherStream({ id, episode }) {
+export async function resolveLauncherStream({ id, episode }) {
   const details = await getDetails(id);
   const epData = details.seasons[0].episodes.find(e => e.episodeNumber == episode);
   if (!epData) throw new Error(`Episode not found`);
@@ -175,12 +174,3 @@ async function resolveLauncherStream({ id, episode }) {
 
   return { masterUrl: unique[0], isEmbed: true, subtitles: [] };
 }
-
-module.exports = {
-  fetchTrending,
-  fetchPopular,
-  search,
-  getDetails,
-  discover,
-  resolveLauncherStream
-};
