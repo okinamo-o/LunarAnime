@@ -1,4 +1,4 @@
-const PROXY_BASE = 'https://okinamo-lunar-proxy-okinamo.hf.space/proxy';
+const PROXY_BASE = 'https://m-a-v-l-u-n-a-r-a-n-i-m-e-p-r-o-x-y.hf.space/proxy';
 
 export const getImageUrl = (path) => {
   if (!path) return 'https://placehold.co/500x750/1a1a25/ffffff?text=No+Image';
