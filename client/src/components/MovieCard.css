@@ -1,0 +1,191 @@
+.movie-card {
+  flex-shrink: 0;
+  width: 180px;
+  cursor: pointer;
+  transition: transform var(--transition-smooth);
+}
+
+.movie-card:hover {
+  transform: translateY(-8px);
+}
+
+.movie-card__poster-wrapper {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 2/3;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
+}
+
+.movie-card:hover .movie-card__poster-wrapper {
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(229, 9, 20, 0.15);
+}
+
+.movie-card__poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-smooth);
+}
+
+.movie-card:hover .movie-card__poster {
+  transform: scale(1.08);
+}
+
+.movie-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.movie-card:hover .movie-card__overlay {
+  opacity: 1;
+}
+
+.movie-card__play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary);
+  color: white;
+  border: 2px solid rgba(255,255,255,0.3);
+  transition: all var(--transition-base);
+  text-decoration: none;
+}
+
+.movie-card__play-btn:hover {
+  transform: scale(1.15);
+  box-shadow: var(--shadow-glow);
+}
+
+.movie-card__remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  z-index: 2;
+  opacity: 0.8;
+}
+
+.movie-card__remove-btn:hover {
+  background: #ff4d4d;
+  transform: scale(1.1);
+  border-color: transparent;
+  opacity: 1;
+}
+
+.movie-card__rating {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+}
+
+.movie-card__badges {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.movie-card__badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.movie-card__badge--type.anime {
+  background: rgba(168, 85, 247, 0.8); /* Purple for Anime */
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.movie-card__badge--type.tv {
+  background: rgba(59, 130, 246, 0.8); /* Blue for TV */
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.movie-card__badge--type.movie {
+  background: rgba(229, 9, 20, 0.8); /* Red for Movie */
+  border-color: rgba(229, 9, 20, 0.4);
+}
+
+.movie-card__badge--source {
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 0.55rem;
+  opacity: 0.9;
+}
+
+.movie-card__badge--source.source-9anime {
+  color: #a855f7;
+}
+
+.movie-card__badge--source.source-123chill {
+  color: #3b82f6;
+}
+
+.movie-card__info {
+  padding: 10px 4px 0;
+}
+
+.movie-card__title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.movie-card__year {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.movie-card--skeleton {
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .movie-card {
+    width: 140px;
+  }
+}

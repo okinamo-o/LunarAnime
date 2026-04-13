@@ -1,0 +1,7 @@
+
+> server@1.0.0 start
+> node index.js
+
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+🚀 LunarCinema API running on port 5000
+✅ MongoDB connected to lunarcinema

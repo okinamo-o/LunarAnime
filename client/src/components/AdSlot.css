@@ -1,0 +1,64 @@
+/* ============================================
+   Ad Slot Styles — blends with LunarAnime UI
+   ============================================ */
+
+.ad-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 24px auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+  position: relative;
+  z-index: 1;
+}
+
+/* Subtle "Ad" label */
+.ad-slot::before {
+  content: 'Ad';
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Banner — 728x90 leaderboard */
+.ad-slot--banner {
+  max-width: 728px;
+  min-height: 90px;
+  padding: 8px;
+}
+
+/* Rectangle — 300x250 medium */
+.ad-slot--rectangle {
+  max-width: 300px;
+  min-height: 250px;
+  padding: 8px;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .ad-slot--banner {
+    max-width: 100%;
+    min-height: 60px;
+  }
+
+  .ad-slot--rectangle {
+    max-width: 100%;
+    min-height: 200px;
+  }
+}
+
+/* Ensure iframes inside ad slots are responsive */
+.ad-slot iframe {
+  max-width: 100%;
+  border: none;
+}
