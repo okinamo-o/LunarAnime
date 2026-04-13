@@ -89,9 +89,10 @@ export default function Search() {
 
   // Merge new results with existing ones, removing duplicates by ID
   const mergeResults = (prev, incoming) => {
-    const seen = new Set(prev.map(r => r.id))
-    const unique = incoming.filter(r => !seen.has(r.id))
-    return { merged: [...prev, ...unique], newCount: unique.length }
+    const results = Array.isArray(incoming) ? incoming : [];
+    const seen = new Set(prev.map(r => r.id));
+    const unique = results.filter(r => !seen.has(r.id));
+    return { merged: [...prev, ...unique], newCount: unique.length };
   }
 
   const handleLoadMore = () => {

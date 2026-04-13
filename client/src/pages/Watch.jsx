@@ -132,17 +132,22 @@ export default function Watch() {
   const totalEpisodes = currentSeason.episodes.length || 0
 
   const handleNextEpisode = () => {
-    // Rely on simple increment inside the extracted episodes list
-    const currentIndex = currentSeason.episodes.findIndex(e => e.episodeNumber === episode);
-    if (currentIndex !== -1 && currentIndex < totalEpisodes - 1) {
-      setEpisode(currentSeason.episodes[currentIndex + 1].episodeNumber);
+    if (!currentSeason.episodes.length) return;
+    const currentIndex = currentSeason.episodes.findIndex(e => e.id === episode || e.episodeNumber === episode);
+    if (currentIndex !== -1 && currentIndex < currentSeason.episodes.length - 1) {
+      const nextEp = currentSeason.episodes[currentIndex + 1];
+      setEpisode(nextEp.episodeNumber);
+      setSearchParams({ s: season, e: nextEp.episodeNumber }, { replace: true });
     }
   }
 
   const handlePrevEpisode = () => {
-    const currentIndex = currentSeason.episodes.findIndex(e => e.episodeNumber === episode);
+    if (!currentSeason.episodes.length) return;
+    const currentIndex = currentSeason.episodes.findIndex(e => e.id === episode || e.episodeNumber === episode);
     if (currentIndex > 0) {
-      setEpisode(currentSeason.episodes[currentIndex - 1].episodeNumber);
+      const prevEp = currentSeason.episodes[currentIndex - 1];
+      setEpisode(prevEp.episodeNumber);
+      setSearchParams({ s: season, e: prevEp.episodeNumber }, { replace: true });
     }
   }
 
