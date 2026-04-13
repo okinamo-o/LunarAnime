@@ -11,6 +11,9 @@ const proxyRoutes = require('./routes/proxy');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// trust proxy is required for express-rate-limit on Render
+app.set('trust proxy', 1);
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
