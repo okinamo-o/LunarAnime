@@ -97,11 +97,11 @@ export default function MovieDetails() {
     <div className="details-page page-enter">
       {/* Hero Backdrop */}
       <div className="details-page__hero">
-        {getImageUrl(details.backdrop || details.poster, id).includes('placehold.co') ? (
+        {getImageUrl(details.backdrop || details.poster).includes('placehold.co') ? (
           <div className="details-page__backdrop" style={{ background: 'linear-gradient(45deg, #1A1A29 0%, #0D0D14 100%)' }} />
         ) : (
           <img
-            src={getImageUrl(details.backdrop || details.poster, id)}
+            src={getImageUrl(details.backdrop || details.poster)}
             alt={title}
             className="details-page__backdrop"
             style={{ objectPosition: 'top center' }}
@@ -116,7 +116,7 @@ export default function MovieDetails() {
           {/* Poster */}
           <div className="details-page__poster-col">
             <img
-              src={getImageUrl(details.poster, id)}
+              src={getImageUrl(details.poster)}
               alt={title}
               className="details-page__poster"
             />
