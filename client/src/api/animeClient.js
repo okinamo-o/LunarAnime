@@ -19,6 +19,7 @@ const fetchProxy = async (params) => {
 
 export const getTrending = () => fetchProxy({ action: 'trending' });
 export const getPopular = () => fetchProxy({ action: 'popular' });
+export const getLatestEpisodes = () => fetchProxy({ action: 'latest-episodes' });
 export const getAnimeDetails = (id) => fetchProxy({ action: 'details', id });
 export const getDetails = (type, id) => getAnimeDetails(id);
 export const searchMulti = (q, page = 1) => fetchProxy({ action: 'search', q, page });

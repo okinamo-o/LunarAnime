@@ -3,7 +3,7 @@ import Hero from '../components/Hero'
 import MovieCarousel from '../components/MovieCarousel'
 import AdSlot from '../components/AdSlot'
 import ADS_CONFIG from '../config/ads'
-import { getTrending, getPopular } from '../api/animeClient'
+import { getTrending, getPopular, getLatestEpisodes } from '../api/animeClient'
 import { getWatchlist, removeFromWatchlist } from '../api/backend'
 import { useAuth } from '../context/AuthContext'
 import useSEO from '../hooks/useSEO'
@@ -17,17 +17,20 @@ export default function Home() {
   })
   const [trending, setTrending] = useState([])
   const [popular, setPopular] = useState([])
+  const [latestEpisodes, setLatestEpisodes] = useState([])
   const [continueWatching, setContinueWatching] = useState([])
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
     try {
-      const [trendData, popData] = await Promise.all([
+      const [trendData, popData, latestData] = await Promise.all([
         getTrending(),
-        getPopular()
+        getPopular(),
+        getLatestEpisodes()
       ])
       setTrending(Array.isArray(trendData) ? trendData : [])
       setPopular(Array.isArray(popData) ? popData : [])
+      setLatestEpisodes(Array.isArray(latestData) ? latestData : [])
 
       if (user) {
         try {
@@ -91,6 +94,11 @@ export default function Home() {
                 onRemove={handleRemoveHome}
               />
             )}
+            <MovieCarousel
+              title="⚡ آخر الحلقات المضافة"
+              items={latestEpisodes}
+              loading={loading}
+            />
             <MovieCarousel
               title="🔥 الترند هذا الأسبوع"
               items={trending}
