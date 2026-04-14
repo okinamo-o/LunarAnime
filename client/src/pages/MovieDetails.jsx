@@ -97,12 +97,16 @@ export default function MovieDetails() {
     <div className="details-page page-enter">
       {/* Hero Backdrop */}
       <div className="details-page__hero">
-        <img
-          src={getImageUrl(details.backdrop || details.poster)}
-          alt={title}
-          className="details-page__backdrop"
-          style={{ objectPosition: 'top center' }}
-        />
+        {getImageUrl(details.backdrop || details.poster).includes('placehold.co') ? (
+          <div className="details-page__backdrop" style={{ background: 'linear-gradient(45deg, #1A1A29 0%, #0D0D14 100%)' }} />
+        ) : (
+          <img
+            src={getImageUrl(details.backdrop || details.poster)}
+            alt={title}
+            className="details-page__backdrop"
+            style={{ objectPosition: 'top center' }}
+          />
+        )}
         <div className="details-page__hero-gradient" />
         <div className="details-page__hero-gradient-left" />
       </div>
