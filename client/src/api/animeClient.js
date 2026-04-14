@@ -1,8 +1,7 @@
 const PROXY_BASE = 'https://okinamo-lunar-proxy-okinamo.hf.space/proxy';
 
 const MANUAL_COVERS = {
-  'aishiteru-game-wo-owarasetai': 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx143085-f5H7nB7uN2t4.jpg',
-  'aishiteru-game-wo-owarasetai-anime': 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx143085-f5H7nB7uN2t4.jpg'
+  'aishiteru-game-wo-owarasetai': 'https://uploads.mangadex.org/covers/acdbf57f-bf54-41b4-8d92-b3f3d14c852e/ffbebbd5-9188-4ae7-aaa7-760a8687838b.png',
 };
 
 export const getImageUrl = (path, overrideId = null) => {
