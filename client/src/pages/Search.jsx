@@ -243,7 +243,9 @@ export default function Search() {
       <div className="search-page__results">
         {loading && page === 1 ? (
           <div className="search-page__grid">
-            {Array(12).fill(0).map((_, i) => <MovieCardSkeleton key={i} />)}
+            {Array(10).fill(0).map((_, i) => (
+               <div key={i} className="skeleton" style={{ aspectRatio: '2/3', borderRadius: '12px' }} />
+            ))}
           </div>
         ) : results.length === 0 ? (
           <div className="search-page__empty" style={{ textAlign: 'center', padding: '100px 0' }}>

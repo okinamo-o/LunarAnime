@@ -70,33 +70,45 @@ export default function Home() {
 
   return (
     <div className="home-page page-enter">
-      <Hero />
+      {loading ? (
+        <div className="container" style={{ padding: '2rem 0' }}>
+           <div className="skeleton" style={{ height: '450px', borderRadius: '15px', marginBottom: '3rem' }} />
+           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '2rem' }}>
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="skeleton" style={{ aspectRatio: '2/3', borderRadius: '12px' }} />
+              ))}
+           </div>
+        </div>
+      ) : (
+        <>
+          <Hero />
+          <div className="home-page__carousels">
+            {continueWatching.length > 0 && (
+              <MovieCarousel
+                title="🍿 متابعة المشاهدة"
+                items={continueWatching}
+                loading={loading}
+                onRemove={handleRemoveHome}
+              />
+            )}
+            <MovieCarousel
+              title="🔥 الترند هذا الأسبوع"
+              items={trending}
+              loading={loading}
+            />
 
-      <div className="home-page__carousels">
-        {continueWatching.length > 0 && (
-          <MovieCarousel
-            title="🍿 متابعة المشاهدة"
-            items={continueWatching}
-            loading={loading}
-            onRemove={handleRemoveHome}
-          />
-        )}
-        <MovieCarousel
-          title="🔥 الترند هذا الأسبوع"
-          items={trending}
-          loading={loading}
-        />
+            {showAds && <AdSlot type="banner" />}
 
-        {showAds && <AdSlot type="banner" />}
+            <MovieCarousel
+              title="🎬 الأنمي الأكثر شعبية"
+              items={popular}
+              loading={loading}
+            />
 
-        <MovieCarousel
-          title="🎬 الأنمي الأكثر شعبية"
-          items={popular}
-          loading={loading}
-        />
-
-        {showAds && <AdSlot type="banner" />}
-      </div>
+            {showAds && <AdSlot type="banner" />}
+          </div>
+        </>
+      )}
     </div>
   )
 }

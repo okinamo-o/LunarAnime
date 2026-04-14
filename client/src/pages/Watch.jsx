@@ -214,19 +214,36 @@ export default function Watch() {
       {/* Episode Browser */}
       {seasons.length > 0 && currentSeason.episodes.length > 0 && (
         <div className="watch-page__episodes glass-heavy">
+          <div className="watch-page__episodes-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.2rem' }}>قائمة الحلقات</h3>
+            <div className="watch-page__ep-nav" style={{ display: 'flex', gap: '0.8rem' }}>
+              <button className="btn-secondary" onClick={handlePrevEpisode} disabled={episode === currentSeason.episodes[currentSeason.episodes.length - 1]?.episodeNumber}>
+                السابق
+              </button>
+              <button className="btn-primary" onClick={handleNextEpisode} disabled={episode === currentSeason.episodes[0]?.episodeNumber}>
+                التالي
+              </button>
+            </div>
+          </div>
+
           <EpisodeBrowser
             episodes={currentSeason.episodes}
             currentEpisode={episode}
             watchedEpisodes={watchedEpisodes}
-            onSelect={setEpisode}
+            onSelect={(ep) => {
+              setEpisode(ep);
+              setSearchParams({ s: season, e: ep });
+            }}
           />
-          <div className="watch-page__ep-nav" style={{ justifyContent: 'space-between', marginTop: '12px', direction: 'rtl' }}>
-            <button className="btn-secondary" onClick={handleNextEpisode} disabled={episode === currentSeason.episodes[currentSeason.episodes.length - 1]?.episodeNumber}>
-              → التالي
-            </button>
-            <button className="btn-secondary" onClick={handlePrevEpisode} disabled={episode === currentSeason.episodes[0]?.episodeNumber}>
-              السابق ←
-            </button>
+          
+          {/* Download Section (Future Animelek Integration) */}
+          <div className="watch-page__downloads" style={{ marginTop: '2rem', padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+             <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                📥 روابط التحميل (جودة عالية)
+             </h4>
+             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.9rem', color: '#a0a0a5' }}>جاري استخراج الروابط المباشرة من Animelek...</span>
+             </div>
           </div>
         </div>
       )}
