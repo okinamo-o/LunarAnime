@@ -66,7 +66,7 @@ export default function Watch() {
 
 
   useEffect(() => {
-    if (loading) return
+    if (loading || !details) return
 
     let cancelled = false
     const resolveLauncher = async () => {
@@ -74,7 +74,12 @@ export default function Watch() {
       setLauncherError('')
 
       try {
-        const data = await getLauncherStream(type, id, season, episode)
+        // Find the episode slug from details data
+        const allEps = details?.seasons?.[0]?.episodes || []
+        const epObj = allEps.find(e => e.episodeNumber === episode)
+        const episodeSlug = epObj?.id || `${id}-${episode}-%D8%A7%D9%84%D8%AD%D9%84%D9%82%D8%A9`
+        
+        const data = await getLauncherStream(type, id, season, episodeSlug)
         if (cancelled) return
         setStreamData(data)
         setActiveServer(0)
@@ -92,7 +97,7 @@ export default function Watch() {
     return () => {
       cancelled = true
     }
-  }, [loading, type, id, season, episode])
+  }, [loading, type, id, season, episode, details])
 
   // Auto-save progress whenever you watch anything (including first load)
   useEffect(() => {
@@ -126,30 +131,29 @@ export default function Watch() {
 
   const title = details?.title || details?.name || 'جاري التحميل...'
   
-  // Scraper returns details.seasons array.
-  const seasons = details?.seasons || []
-  
-  // Find current season Object
-  const currentSeason = seasons.find(s => s.seasonNumber === season) || seasons[0] || { episodes: [] }
+  // Animelek doesn't have real seasons — all episodes are in one list
+  const currentSeason = details?.seasons?.[0] || { episodes: [] }
   const totalEpisodes = currentSeason.episodes.length || 0
 
   const handleNextEpisode = () => {
     if (!currentSeason.episodes.length) return;
-    const currentIndex = currentSeason.episodes.findIndex(e => e.id === episode || e.episodeNumber === episode);
+    const currentIndex = currentSeason.episodes.findIndex(e => e.episodeNumber === episode);
     if (currentIndex !== -1 && currentIndex < currentSeason.episodes.length - 1) {
       const nextEp = currentSeason.episodes[currentIndex + 1];
       setEpisode(nextEp.episodeNumber);
       setSearchParams({ s: season, e: nextEp.episodeNumber }, { replace: true });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
   const handlePrevEpisode = () => {
     if (!currentSeason.episodes.length) return;
-    const currentIndex = currentSeason.episodes.findIndex(e => e.id === episode || e.episodeNumber === episode);
+    const currentIndex = currentSeason.episodes.findIndex(e => e.episodeNumber === episode);
     if (currentIndex > 0) {
       const prevEp = currentSeason.episodes[currentIndex - 1];
       setEpisode(prevEp.episodeNumber);
       setSearchParams({ s: season, e: prevEp.episodeNumber }, { replace: true });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
@@ -224,15 +228,15 @@ export default function Watch() {
       )}
 
       {/* Episode Browser */}
-      {seasons.length > 0 && currentSeason.episodes.length > 0 && (
+      {currentSeason.episodes.length > 0 && (
         <div className="watch-page__episodes glass-heavy">
           <div className="watch-page__episodes-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '1.2rem' }}>قائمة الحلقات</h3>
             <div className="watch-page__ep-nav" style={{ display: 'flex', gap: '0.8rem' }}>
-              <button className="btn-secondary" onClick={handlePrevEpisode} disabled={episode === currentSeason.episodes[currentSeason.episodes.length - 1]?.episodeNumber}>
+              <button className="btn-secondary" onClick={handlePrevEpisode} disabled={episode <= (currentSeason.episodes[0]?.episodeNumber || 1)}>
                 السابق
               </button>
-              <button className="btn-primary" onClick={handleNextEpisode} disabled={episode === currentSeason.episodes[0]?.episodeNumber}>
+              <button className="btn-primary" onClick={handleNextEpisode} disabled={episode >= (currentSeason.episodes[currentSeason.episodes.length - 1]?.episodeNumber || episode)}>
                 التالي
               </button>
             </div>
@@ -248,30 +252,28 @@ export default function Watch() {
             }}
           />
           
-          {/* Download Section (Powered by Animelek) */}
+          {/* Download Section - Real links from servers */}
+          {streamData?.servers && streamData.servers.length > 0 && (
           <div className="watch-page__downloads" style={{ marginTop: '2rem', padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
              <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 📥 روابط التحميل المباشرة
              </h4>
-             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <a 
-                  href={`#`} 
-                  onClick={(e) => { e.preventDefault(); alert('جاري استخراج رابط التحميل المباشر من السيرفر...'); }}
-                  className="btn-secondary" 
-                  style={{ fontSize: '0.8rem', padding: '8px 20px' }}
-                >
-                  تحميل (1080p)
-                </a>
-                <a 
-                  href={`#`} 
-                  onClick={(e) => { e.preventDefault(); alert('جاري استخراج رابط التحميل المباشر من السيرفر...'); }}
-                  className="btn-secondary" 
-                  style={{ fontSize: '0.8rem', padding: '8px 20px' }}
-                >
-                  تحميل (720p)
-                </a>
+             <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+                {streamData.servers.map((srv, i) => (
+                  <a 
+                    key={i}
+                    href={srv.url.replace('/embed-', '/').replace('.html', '').replace('/e/', '/d/')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary" 
+                    style={{ fontSize: '0.8rem', padding: '8px 20px', textTransform: 'capitalize' }}
+                  >
+                    📥 {srv.name} {srv.quality && `| ${srv.quality}`}
+                  </a>
+                ))}
              </div>
           </div>
+          )}
         </div>
       )}
     </div>

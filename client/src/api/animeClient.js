@@ -22,6 +22,6 @@ export const getPopular = () => fetchProxy({ action: 'popular' });
 export const getAnimeDetails = (id) => fetchProxy({ action: 'details', id });
 export const getDetails = (type, id) => getAnimeDetails(id);
 export const searchMulti = (q, page = 1) => fetchProxy({ action: 'search', q, page });
-export const getLauncherStream = (type, id, season, episode) => fetchProxy({ action: 'launcher', id, episode });
+export const getLauncherStream = (type, id, season, episodeSlug) => fetchProxy({ action: 'launcher', id, episode: episodeSlug });
 export const discoverByGenre = (type, genre, page = 1) => fetchProxy({ action: 'discover', category: 'anime-genre', slug: genre, page });
 export const getSubtitleTrackUrl = (url) => `${PROXY_BASE}?action=subtitle&url=${encodeURIComponent(url)}`;
