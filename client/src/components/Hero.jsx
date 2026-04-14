@@ -86,7 +86,7 @@ export default function Hero() {
 
           <div className="hero__badges" style={{ justifyContent: 'flex-end', marginBottom: '24px' }}>
             <span className="badge badge-accent">🔥 الترند</span>
-            <span className="badge">{movie.releaseDate}</span>
+            {movie.animeType && <span className={`movie-card__badge movie-card__badge--type ${(movie.animeType).toLowerCase()}`}>{movie.animeType}</span>}
           </div>
 
           <div className="hero__actions" style={{ justifyContent: 'flex-end' }}>
