@@ -45,6 +45,13 @@ export default function MovieCard({ item, onRemove }) {
             </button>
           )}
         </div>
+        {item.animeType && (
+          <div className="movie-card__badges">
+            <span className={`movie-card__badge movie-card__badge--type ${(item.animeType || '').toLowerCase()}`}>
+              {item.animeType}
+            </span>
+          </div>
+        )}
       </div>
       <div className="movie-card__info">
         <h3 className="movie-card__title">{title}</h3>
