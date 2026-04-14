@@ -45,8 +45,9 @@ export default function Header() {
       if (searchQuery.trim().length >= 2) {
         try {
           const data = await searchMulti(searchQuery)
-          // Anime4up returns .title and .poster directly
-          setSearchResults((data.results || []).slice(0, 8))
+          // Animelek proxy returns a flat array [{id, title, poster}, ...]
+          const arr = Array.isArray(data) ? data : (data.results || [])
+          setSearchResults(arr.slice(0, 8))
         } catch { setSearchResults([]) }
       } else {
         setSearchResults([])

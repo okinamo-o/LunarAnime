@@ -21,6 +21,7 @@ export default function Watch() {
   const [launcherLoading, setLauncherLoading] = useState(false)
   const [launcherError, setLauncherError] = useState('')
   const [watchedEpisodes, setWatchedEpisodes] = useState([])
+  const [activeServer, setActiveServer] = useState(0)
   
   const isInitialLoad = useRef(true)
 
@@ -76,6 +77,7 @@ export default function Watch() {
         const data = await getLauncherStream(type, id, season, episode)
         if (cancelled) return
         setStreamData(data)
+        setActiveServer(0)
       } catch (err) {
         if (cancelled) return
         console.warn('Launcher failed:', err)
@@ -181,24 +183,34 @@ export default function Watch() {
             <div className="watch-page__loader" />
             <p>{loading ? 'جاري التحميل...' : 'جاري استخراج السيرفرات القوية...'}</p>
           </div>
-        ) : streamData ? (
-          streamData.isEmbed ? (
+        ) : streamData && (streamData.masterUrl || (streamData.servers && streamData.servers.length > 0)) ? (
+          <>
             <iframe
-              key={streamData.masterUrl}
-              src={streamData.masterUrl}
+              key={streamData.servers?.[activeServer]?.url || streamData.masterUrl}
+              src={streamData.servers?.[activeServer]?.url || streamData.masterUrl}
               className="watch-page__player"
               allowFullScreen
               allow="autoplay; encrypted-media; fullscreen"
               frameBorder="0"
               title={`مشاهدة ${title}`}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             />
-          ) : (
-            <CustomLauncherPlayer
-              key={`anime-${id}-${season}-${episode}-${streamData.masterUrl}`}
-              streamData={streamData}
-              title={title}
-            />
-          )
+            {/* Server Switching Buttons */}
+            {streamData.servers && streamData.servers.length > 1 && (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1rem', padding: '0 1rem' }}>
+                {streamData.servers.map((srv, i) => (
+                  <button
+                    key={i}
+                    className={i === activeServer ? 'btn-primary' : 'btn-secondary'}
+                    onClick={() => setActiveServer(i)}
+                    style={{ fontSize: '0.8rem', padding: '6px 16px', textTransform: 'capitalize' }}
+                  >
+                    {srv.name} {srv.quality && `| ${srv.quality}`}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <div className="watch-page__player glass" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
             <h3 style={{ marginBottom: '1rem' }}>الأنمي غير متاح</h3>

@@ -154,17 +154,44 @@ export default function Search() {
   const loadGenresData = async (genreSlug, pageNum = 1, append = false) => {
     setLoading(true)
     try {
-      const data = await discoverByGenre('anime', genreSlug, pageNum)
-      if (append) {
-        setResults(prev => {
-          const { merged, newCount } = mergeResults(prev, Array.isArray(data) ? data : [])
-          if (newCount === 0) setHasMore(false)
-          return merged
-        })
+      const slugs = genreSlug.split(',').filter(Boolean)
+      
+      if (slugs.length === 1) {
+        // Single genre: simple fetch
+        const data = await discoverByGenre('anime', slugs[0], pageNum)
+        if (append) {
+          setResults(prev => {
+            const { merged, newCount } = mergeResults(prev, Array.isArray(data) ? data : [])
+            if (newCount === 0) setHasMore(false)
+            return merged
+          })
+        } else {
+          const resultsArray = Array.isArray(data) ? data : []
+          setResults(resultsArray)
+          setHasMore(resultsArray.length > 0)
+        }
       } else {
-        const resultsArray = Array.isArray(data) ? data : []
-        setResults(resultsArray)
-        setHasMore(resultsArray.length > 0)
+        // Multi-genre: fetch each genre and intersect results
+        const allResults = await Promise.all(
+          slugs.map(s => discoverByGenre('anime', s, pageNum))
+        )
+        // Find anime that appear in ALL genre results (intersection by id)
+        const idSets = allResults.map(r => new Set((Array.isArray(r) ? r : []).map(item => item.id)))
+        const firstResults = Array.isArray(allResults[0]) ? allResults[0] : []
+        const intersection = firstResults.filter(item => 
+          idSets.every(set => set.has(item.id))
+        )
+        
+        if (append) {
+          setResults(prev => {
+            const { merged, newCount } = mergeResults(prev, intersection)
+            if (newCount === 0) setHasMore(false)
+            return merged
+          })
+        } else {
+          setResults(intersection)
+          setHasMore(intersection.length > 0)
+        }
       }
     } catch (err) {
       console.error(err)
