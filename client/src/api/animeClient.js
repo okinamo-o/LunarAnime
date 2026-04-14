@@ -1,6 +1,15 @@
 const PROXY_BASE = 'https://okinamo-lunar-proxy-okinamo.hf.space/proxy';
 
-export const getImageUrl = (path) => {
+const MANUAL_COVERS = {
+  'aishiteru-game-wo-owarasetai': 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx143085-f5H7nB7uN2t4.jpg',
+  'aishiteru-game-wo-owarasetai-anime': 'https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx143085-f5H7nB7uN2t4.jpg'
+};
+
+export const getImageUrl = (path, overrideId = null) => {
+  if (overrideId && MANUAL_COVERS[overrideId]) {
+    return MANUAL_COVERS[overrideId];
+  }
+  
   if (!path || path.includes('default.png') || path.includes('default.jpg')) {
     return 'https://placehold.co/500x750/1a1a25/ffffff?text=No+Image';
   }

@@ -21,7 +21,7 @@ export default function MovieCard({ item, onRemove }) {
     <div className="movie-card" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
       <div className="movie-card__poster-wrapper">
         <img
-          src={getImageUrl(item.poster || item.posterPath)}
+          src={getImageUrl(item.poster || item.posterPath, item.id)}
           alt={title}
           className="movie-card__poster"
           loading="lazy"
