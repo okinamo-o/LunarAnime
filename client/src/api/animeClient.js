@@ -2,7 +2,7 @@ const PROXY_BASE = 'https://okinamo-lunar-proxy-okinamo.hf.space/proxy';
 
 export const getImageUrl = (path) => {
   if (!path) return 'https://placehold.co/500x750/1a1a25/ffffff?text=No+Image';
-  if (path.includes('anime4up') || path.includes('witanime')) {
+  if (path.includes('anime4up') || path.includes('witanime') || path.includes('animelek')) {
     return `${PROXY_BASE}?action=image&url=${encodeURIComponent(path)}`;
   }
   return path;
