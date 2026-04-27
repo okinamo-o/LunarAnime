@@ -8,6 +8,7 @@ import Watch from './pages/Watch'
 import Dashboard from './pages/Dashboard'
 import Auth from './pages/Auth'
 import Search from './pages/Search'
+import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 import ErrorBoundary from './components/ErrorBoundary'
 import { useAuth } from './context/AuthContext'
@@ -45,6 +46,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

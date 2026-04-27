@@ -86,6 +86,7 @@ export default function Header() {
           <Link to="/" className="header__nav-link" onClick={() => setMobileMenuOpen(false)}>الرئيسية</Link>
           <Link to="/search" className="header__nav-link" onClick={() => setMobileMenuOpen(false)}>اكتشف</Link>
           {user && <Link to="/dashboard" className="header__nav-link" onClick={() => setMobileMenuOpen(false)}>قائمتي</Link>}
+          {user?.role === 'admin' && <Link to="/admin" className="header__nav-link" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--accent-primary)' }}>لوحة التحكم</Link>}
         </nav>
 
         <div className="header__actions" style={{ flexDirection: 'row-reverse' }}>

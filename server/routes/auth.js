@@ -50,6 +50,7 @@ router.post('/register', registerLimiter, async (req, res) => {
       _id: user._id,
       username: user.username,
       email: user.email,
+      role: user.role,
       token
     });
   } catch (err) {
@@ -77,6 +78,7 @@ router.post('/login', loginLimiter, async (req, res) => {
         _id: user._id,
         username: user.username,
         email: user.email,
+        role: user.role,
         token: generateToken(user._id.toString())
       });
     } else {
