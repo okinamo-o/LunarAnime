@@ -14,7 +14,8 @@ export default function Hero() {
     const load = async () => {
       try {
         const trendData = await getTrending()
-        const filtered = (Array.isArray(trendData) ? trendData : []).filter(m => m.poster).slice(0, 6)
+        const actualData = trendData?.results || trendData;
+        const filtered = (Array.isArray(actualData) ? actualData : []).filter(m => m.poster).slice(0, 6)
         setMovies(filtered)
       } catch (err) {
         console.error('Failed to load hero:', err)

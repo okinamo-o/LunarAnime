@@ -28,9 +28,13 @@ export default function Home() {
         getPopular(),
         getLatestEpisodes()
       ])
-      setTrending(Array.isArray(trendData) ? trendData : [])
-      setPopular(Array.isArray(popData) ? popData : [])
-      setLatestEpisodes(Array.isArray(latestData) ? latestData : [])
+      const actualTrend = trendData?.results || trendData;
+      const actualPop = popData?.results || popData;
+      const actualLatest = latestData?.results || latestData;
+
+      setTrending(Array.isArray(actualTrend) ? actualTrend : [])
+      setPopular(Array.isArray(actualPop) ? actualPop : [])
+      setLatestEpisodes(Array.isArray(actualLatest) ? actualLatest : [])
 
       if (user) {
         try {
