@@ -1,6 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -37,7 +40,18 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
+
+// Set security HTTP headers
+app.use(helmet());
+
+// Body parser
+app.use(express.json({ limit: '10kb' })); // Limit body size
+
+// Sanitize data to prevent NoSQL Injection
+app.use(mongoSanitize());
+
+// Sanitize data to prevent XSS
+app.use(xss());
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lunaranime')
   .then(() => console.log('✅ MongoDB connected to lunaranime'))

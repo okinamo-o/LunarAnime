@@ -4,6 +4,36 @@ const anime4upScraper = require('../services/anime4upScraper');
 const { resolveLauncherStream, getSubtitleAsVtt } = require('../services/launcherResolver');
 const axios = require('axios');
 
+// Helper to validate URLs to prevent SSRF
+function isValidUrl(urlString) {
+  try {
+    const url = new URL(urlString);
+    
+    // Only allow HTTP/HTTPS
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+    
+    const hostname = url.hostname;
+    
+    // Block internal network access (SSRF protection)
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('169.254.') || // AWS Metadata
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.local')
+    ) {
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // Helper to rewrite relative HLS paths to absolute proxied paths
 function rewriteManifest(manifest, originalUrl, originalReferer, cookies = '') {
   const baseUrl = new URL(originalUrl);
@@ -105,6 +135,7 @@ router.get('/vstream', async (req, res) => {
   const isHtml = req.query.isHtml === 'true';
 
   if (!targetUrl) return res.status(400).send('Missing URL');
+  if (!isValidUrl(targetUrl)) return res.status(403).send('Invalid or forbidden URL (SSRF Protection)');
 
   const isManifest = targetUrl.includes('.m3u8');
   let attempt = 0;
@@ -180,6 +211,9 @@ router.get('/subtitle', async (req, res) => {
     if (!subtitleUrl) {
       return res.status(400).json({ error: 'Missing subtitle URL' });
     }
+    if (!isValidUrl(subtitleUrl)) {
+      return res.status(403).json({ error: 'Invalid or forbidden URL (SSRF Protection)' });
+    }
 
     const vtt = await getSubtitleAsVtt(String(subtitleUrl));
     res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
@@ -198,6 +232,7 @@ router.get('/subtitle', async (req, res) => {
 router.get('/image', async (req, res) => {
   const imageUrl = req.query.url;
   if (!imageUrl) return res.status(400).send('Missing url');
+  if (!isValidUrl(imageUrl)) return res.status(403).send('Invalid or forbidden URL (SSRF Protection)');
 
   try {
     const response = await axios.get(imageUrl, {
