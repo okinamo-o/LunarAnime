@@ -1,9 +1,11 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lunaranime';
+const MONGO_URI = 'mongodb+srv://okinamo:frivE%40789456123@cluster0.1hdwciy.mongodb.net/lunaranime?appName=Cluster0';
 
 const setupAdmin = async () => {
   try {

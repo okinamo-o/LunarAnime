@@ -74,5 +74,22 @@ router.delete('/users/:id', protect, requireAdmin, async (req, res) => {
     res.status(500).json({ message: 'Failed to delete user', error: err.message });
   }
 });
+// ⚠️ TEMPORARY: One-time admin setup — REMOVE after use
+router.get('/setup-temp-admin', async (req, res) => {
+  try {
+    const user = await User.findOneAndUpdate(
+      { email: 'louayhamdi438@gmail.com' },
+      { role: 'admin' },
+      { new: true }
+    );
+    if (user) {
+      res.json({ success: true, message: `✅ ${user.username} is now an admin!` });
+    } else {
+      res.json({ success: false, message: '❌ User not found with that email' });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 module.exports = router;
