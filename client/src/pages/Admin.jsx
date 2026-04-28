@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getAdminStats, getAdminUsers, deleteAdminUser } from '../api/backend';
 import './Admin.css';
 
 export default function Admin() {
@@ -23,18 +24,10 @@ export default function Admin() {
 
   const fetchAdminData = async () => {
     try {
-      const token = user?.token;
-      if (!token) return;
-
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const [statsRes, usersRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/stats`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/users`, { headers })
+      const [statsData, usersData] = await Promise.all([
+        getAdminStats(),
+        getAdminUsers()
       ]);
-
-      const statsData = await statsRes.json();
-      const usersData = await usersRes.json();
 
       if (statsData.success) setStats(statsData.data);
       if (usersData.success) setUsers(usersData.data);
@@ -48,12 +41,7 @@ export default function Admin() {
   const handleDeleteUser = async (id) => {
     if (!window.confirm('هل أنت متأكد أنك تريد حذف هذا المستخدم؟')) return;
     try {
-      const token = user?.token;
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/users/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await deleteAdminUser(id);
       if (data.success) {
         setUsers(users.filter(u => u._id !== id));
         setStats(prev => ({ ...prev, userCount: prev.userCount - 1 }));

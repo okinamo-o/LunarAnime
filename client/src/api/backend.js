@@ -95,3 +95,13 @@ export const submitRating = (animeId, rating) =>
     method: 'POST',
     body: JSON.stringify({ animeId, rating })
   });
+
+// Admin
+export const getAdminStats = () => request('/admin/stats');
+
+export const getAdminUsers = () => request('/admin/users');
+
+export const deleteAdminUser = (userId) => 
+  request(`/admin/users/${userId}`, {
+    method: 'DELETE'
+  });
