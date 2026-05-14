@@ -124,11 +124,21 @@ router.put('/progress/:animeId', protect, async (req, res) => {
 
     if (lastSeason !== undefined) item.lastSeason = lastSeason;
     if (lastEpisode !== undefined) {
-      item.lastEpisode = lastEpisode;
+      const epNum = Number(lastEpisode);
+      item.lastEpisode = epNum;
+      
+      // Initialize if null
       if (!item.watchedEpisodesList) item.watchedEpisodesList = [];
-      if (!item.watchedEpisodesList.includes(lastEpisode)) {
-        item.watchedEpisodesList.push(lastEpisode);
+      
+      // Deduplicate existing entries (self-healing for any previous bugs)
+      let uniqueEps = [...new Set(item.watchedEpisodesList.map(Number))];
+      
+      // Add new episode if not present
+      if (!uniqueEps.includes(epNum)) {
+        uniqueEps.push(epNum);
       }
+      
+      item.watchedEpisodesList = uniqueEps;
     }
     if (title) item.title = title;
     if (posterPath) item.posterPath = posterPath;
