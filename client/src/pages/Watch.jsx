@@ -197,7 +197,6 @@ export default function Watch() {
               allow="autoplay; encrypted-media; fullscreen"
               frameBorder="0"
               title={`مشاهدة ${title}`}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             />
             {/* Server Switching Buttons */}
             {streamData.servers && streamData.servers.length > 1 && (
