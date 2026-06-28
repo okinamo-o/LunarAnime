@@ -48,26 +48,45 @@ function parseAnimelekGrid(html) {
   return results;
 }
 
+async function formatItemsAndFillPosters(items) {
+  for (let item of items) {
+    // Clean messy titles from Animelek (e.g. "انمي One Piece مترجم" -> "One Piece")
+    item.title = item.title.replace(/مشاهدة|انمي|مترجمة|مترجم|اون\s*لاين/g, '').replace(/الحلقة\s*\d+/g, '').trim();
+
+    // Fetch missing posters from Jikan API
+    if (!item.poster || item.poster.includes('default.png') || item.poster.includes('default.jpg')) {
+      try {
+        const { data } = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(item.title)}&limit=1`, { timeout: 2000 });
+        if (data && data.data && data.data.length > 0) {
+          item.poster = data.data[0].images.jpg.large_image_url;
+        }
+        await new Promise(r => setTimeout(r, 350)); // Respect Jikan rate limits
+      } catch (e) {}
+    }
+  }
+  return items;
+}
+
 export async function fetchTrending() {
   const { data } = await axios.get(ANIMELEK_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  return parseAnimelekGrid(data).slice(0, 15);
+  return await formatItemsAndFillPosters(parseAnimelekGrid(data).slice(0, 15));
 }
 
 export async function fetchPopular() {
   const { data } = await axios.get(`${ANIMELEK_URL}/قائمة-الأنمي/`, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  return parseAnimelekGrid(data).slice(0, 15);
+  return await formatItemsAndFillPosters(parseAnimelekGrid(data).slice(0, 15));
 }
 
 export async function fetchLatestEpisodes() {
   const { data } = await axios.get(ANIMELEK_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
   const results = parseAnimelekGrid(data);
-  return results.length > 15 ? results.slice(15, 30) : results;
+  return await formatItemsAndFillPosters(results.length > 15 ? results.slice(15, 30) : results);
 }
 
 export async function search(query) {
   const url = `${ANIMELEK_URL}/?s=${encodeURIComponent(query)}`;
   const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  return parseAnimelekGrid(data);
+  return await formatItemsAndFillPosters(parseAnimelekGrid(data));
 }
 
 export async function discover(category, slugString, page = 1) {
@@ -75,7 +94,7 @@ export async function discover(category, slugString, page = 1) {
   let url = `${ANIMELEK_URL}/anime-genre/${encodeURIComponent(slugString)}/`;
   if (page > 1) url += `page/${page}/`;
   const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  return parseAnimelekGrid(data);
+  return await formatItemsAndFillPosters(parseAnimelekGrid(data));
 }
 
 export async function getDetails(slug) {
@@ -83,8 +102,18 @@ export async function getDetails(slug) {
   const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
   const $ = load(data);
 
-  const title = $('.anime-details h1').text().trim() || $('.title').first().text().trim() || slug;
-  const poster = $('.anime-poster img').attr('src') || $('.image img').attr('src') || '';
+  const rawTitle = $('h1').first().text().trim() || slug;
+  const title = rawTitle.replace(/مشاهدة|انمي|مترجمة|مترجم|اون\s*لاين/g, '').replace(/الحلقة\s*\d+/g, '').trim();
+  let poster = $('.anime-poster img').attr('src') || $('.image img').attr('src') || '';
+  
+  if (!poster || poster.includes('default.png') || poster.includes('default.jpg')) {
+    try {
+      const { data: jikanData } = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`, { timeout: 2000 });
+      if (jikanData && jikanData.data && jikanData.data.length > 0) {
+        poster = jikanData.data[0].images.jpg.large_image_url;
+      }
+    } catch (e) {}
+  }
   const overview = $('.story p').text().trim() || $('.anime-story').text().trim() || $('.anime-details .content p, .media-box .content p').first().text().trim() || 'لا توجد قصة متاحة.';
 
   // Extract episodes from Animelek
