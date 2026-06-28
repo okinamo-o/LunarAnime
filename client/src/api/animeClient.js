@@ -1,4 +1,4 @@
-const PROXY_BASE = 'https://okinamo-lunar-proxy-okinamo.hf.space/proxy';
+const PROXY_BASE = '/api/proxy';
 
 export const getImageUrl = (path) => {
   if (!path || path.includes('default.png') || path.includes('default.jpg')) {
