@@ -167,7 +167,7 @@ export async function getDetails(slug) {
 export async function resolveLauncherStream({ id, episode }) {
   // First, get the Animelek episode URL by parsing the details page
   const details = await getDetails(id);
-  const epObj = details.seasons[0].episodes.find(e => e.episodeNumber == episode);
+  const epObj = details.seasons[0].episodes.find(e => e.episodeNumber == episode || e.id == episode || decodeURIComponent(e.id) == decodeURIComponent(episode));
   
   if (!epObj) {
     throw new Error('Episode not found on video server');
