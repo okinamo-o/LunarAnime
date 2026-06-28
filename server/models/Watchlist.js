@@ -10,6 +10,7 @@ const watchlistItemSchema = new mongoose.Schema({
   releaseDate: { type: String },
   order: { type: Number, default: 0 },
   watched: { type: Boolean, default: false },
+  isSaved: { type: Boolean, default: true },
   lastSeason: { type: Number },
   lastEpisode: { type: Number },
   watchedEpisodesList: { type: [Number], default: [] },

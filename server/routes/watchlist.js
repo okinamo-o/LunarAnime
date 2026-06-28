@@ -23,13 +23,21 @@ router.post('/', protect, async (req, res) => {
     if (!watchlist) {
       watchlist = new Watchlist({ userId: req.user._id, items: [] });
     }
-    const exists = watchlist.items.find(i => i.animeId.toString() === animeId.toString());
-    if (exists) return res.status(400).json({ message: 'Already in watchlist' });
-
-    watchlist.items.push({
-      animeId, mediaType: 'anime', title, posterPath, backdropPath, voteAverage, releaseDate,
-      order: watchlist.items.length
-    });
+    const existingItem = watchlist.items.find(i => i.animeId.toString() === animeId.toString());
+    
+    if (existingItem) {
+      if (existingItem.isSaved) {
+        return res.status(400).json({ message: 'Already in watchlist' });
+      } else {
+        existingItem.isSaved = true;
+      }
+    } else {
+      watchlist.items.push({
+        animeId, mediaType: 'anime', title, posterPath, backdropPath, voteAverage, releaseDate,
+        order: watchlist.items.length,
+        isSaved: true
+      });
+    }
     await watchlist.save();
     res.status(201).json(watchlist.items);
   } catch (err) {
@@ -43,10 +51,17 @@ router.delete('/:animeId', protect, async (req, res) => {
     const watchlist = await Watchlist.findOne({ userId: req.user._id });
     if (!watchlist) return res.status(404).json({ message: 'Watchlist not found' });
 
-    watchlist.items = watchlist.items.filter(
-      i => i.animeId.toString() !== req.params.animeId
-    );
-    await watchlist.save();
+    const item = watchlist.items.find(i => i.animeId.toString() === req.params.animeId);
+    if (item) {
+      if (item.watchedEpisodesList && item.watchedEpisodesList.length > 0) {
+        // Keep it for watch history, just unsave it
+        item.isSaved = false;
+      } else {
+        // No watch history, safe to completely remove
+        watchlist.items = watchlist.items.filter(i => i.animeId.toString() !== req.params.animeId);
+      }
+      await watchlist.save();
+    }
     res.json(watchlist.items);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -107,7 +122,7 @@ router.put('/progress/:animeId', protect, async (req, res) => {
     );
     
     if (!item) {
-      // Auto-add if not in list
+      // Auto-add if not in list (for watch history only)
       item = {
         animeId: req.params.animeId,
         mediaType: 'anime',
@@ -116,7 +131,8 @@ router.put('/progress/:animeId', protect, async (req, res) => {
         backdropPath,
         voteAverage,
         releaseDate,
-        order: watchlist.items.length
+        order: watchlist.items.length,
+        isSaved: false // Crucial: don't mix into manually saved watchlist!
       };
       watchlist.items.push(item);
       item = watchlist.items[watchlist.items.length - 1];

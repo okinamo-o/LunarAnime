@@ -22,10 +22,13 @@ export default function Dashboard() {
     loadWatchlist()
   }, [user, navigate])
 
+  const [activeTab, setActiveTab] = useState('watchlist') // 'watchlist' or 'history'
+
   const loadWatchlist = async () => {
     try {
       const data = await getWatchlist()
-      setItems(data)
+      // Sort items by most recently updated/added
+      setItems(data.reverse())
     } catch (err) {
       console.error('Failed to load watchlist:', err)
     } finally {
@@ -36,7 +39,7 @@ export default function Dashboard() {
   const handleRemove = async (animeId) => {
     try {
       const updated = await removeFromWatchlist(animeId)
-      setItems(updated)
+      setItems(updated.reverse())
     } catch (err) {
       console.error(err)
     }
@@ -44,11 +47,33 @@ export default function Dashboard() {
 
   if (!user) return null
 
+  // Filter items based on active tab
+  const savedItems = items.filter(item => item.isSaved !== false) // Treat undefined as saved (for legacy items)
+  const historyItems = items.filter(item => item.watchedEpisodesList && item.watchedEpisodesList.length > 0)
+
+  const displayedItems = activeTab === 'watchlist' ? savedItems : historyItems
+
   return (
     <div className="dashboard-page page-enter container" style={{ direction: 'rtl' }}>
       <div className="dashboard-page__header" style={{ textAlign: 'right' }}>
-        <h1>قائمتي</h1>
+        <h1>{activeTab === 'watchlist' ? 'قائمتي' : 'سجل المشاهدة'}</h1>
         <p className="dashboard-page__subtitle">مرحبًا، <strong>{user.username}</strong></p>
+      </div>
+
+      {/* Tabs */}
+      <div className="dashboard-page__tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '20px' }}>
+        <button 
+          className={`btn-${activeTab === 'watchlist' ? 'primary' : 'secondary'}`} 
+          onClick={() => setActiveTab('watchlist')}
+        >
+          الأنميات المحفوظة
+        </button>
+        <button 
+          className={`btn-${activeTab === 'history' ? 'primary' : 'secondary'}`} 
+          onClick={() => setActiveTab('history')}
+        >
+          سجل المشاهدة
+        </button>
       </div>
 
       {/* Stats */}
@@ -56,7 +81,7 @@ export default function Dashboard() {
         <div className="stat-card glass" style={{ flexDirection: 'row-reverse' }}>
           <Tv size={24} className="stat-card__icon" />
           <div style={{ textAlign: 'right' }}>
-            <span className="stat-card__value">{items.length}</span>
+            <span className="stat-card__value">{savedItems.length}</span>
             <span className="stat-card__label">عدد الأنميات</span>
           </div>
         </div>
@@ -71,11 +96,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Section heading */}
-      <div style={{ marginBottom: '20px', textAlign: 'right' }}>
-        <h2 style={{ fontSize: '1.3rem' }}>الأنميات المحفوظة</h2>
-      </div>
-
       {/* Watchlist */}
       {loading ? (
         <div className="dashboard-page__loading">
@@ -83,14 +103,14 @@ export default function Dashboard() {
             <div key={i} className="skeleton" style={{ height: 80, borderRadius: 12 }} />
           ))}
         </div>
-      ) : items.length === 0 ? (
-        <div className="dashboard-page__empty" style={{ textAlign: 'center' }}>
-          <p>قائمتك فارغة</p>
+      ) : displayedItems.length === 0 ? (
+        <div className="dashboard-page__empty" style={{ textAlign: 'center', marginTop: '3rem' }}>
+          <p>{activeTab === 'watchlist' ? 'قائمتك فارغة' : 'سجل المشاهدة فارغ'}</p>
           <Link to="/" className="btn-primary">اكتشف الأنمي</Link>
         </div>
       ) : (
         <div className="dashboard-page__list">
-          {items.map((item) => (
+          {displayedItems.map((item) => (
             <div
               key={item._id || item.animeId}
               className="watchlist-item glass"
@@ -124,13 +144,15 @@ export default function Dashboard() {
                 >
                   ▶
                 </Link>
-                <button
-                  className="watchlist-item__action-btn watchlist-item__action-btn--danger"
-                  onClick={() => handleRemove(item.animeId)}
-                  title="إزالة"
-                >
-                  <Trash2 size={16} />
-                </button>
+                {activeTab === 'watchlist' && (
+                  <button
+                    className="watchlist-item__action-btn watchlist-item__action-btn--danger"
+                    onClick={() => handleRemove(item.animeId)}
+                    title="إزالة"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
           ))}
