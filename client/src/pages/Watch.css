@@ -1,6 +1,6 @@
 .watch-page {
   min-height: 100vh;
-  background: #000;
+  background: #050810;
   display: flex;
   flex-direction: column;
 }
@@ -11,6 +11,8 @@
   justify-content: space-between;
   padding: 12px 24px;
   border-bottom: 1px solid var(--border-subtle);
+  background: rgba(7, 11, 22, 0.6);
+  backdrop-filter: blur(12px);
   z-index: 100;
 }
 
@@ -35,11 +37,12 @@
 }
 
 .watch-page__ep-label {
-  padding: 4px 10px;
-  background: var(--accent-primary);
+  padding: 4px 12px;
+  background: var(--accent-gradient);
   border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 700;
+  color: white;
 }
 
 .watch-page__controls {
@@ -51,17 +54,17 @@
 .watch-page__mode-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   padding: 4px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-light);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(123, 110, 246, 0.06);
 }
 
 .watch-page__mode-btn {
   border: none;
   border-radius: var(--radius-full);
-  padding: 7px 13px;
+  padding: 7px 14px;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -72,7 +75,8 @@
 
 .watch-page__mode-btn.active {
   color: #fff;
-  background: var(--accent-primary);
+  background: var(--accent-gradient);
+  box-shadow: 0 0 12px rgba(123, 110, 246, 0.2);
 }
 
 .watch-page__mode-btn:disabled {
@@ -89,7 +93,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(123, 110, 246, 0.08);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-full);
   color: var(--text-primary);
@@ -100,19 +104,23 @@
 }
 
 .watch-page__server-btn:hover {
-  background: rgba(255,255,255,0.12);
+  background: rgba(123, 110, 246, 0.14);
+  border-color: var(--border-accent);
 }
 
 .watch-page__server-dropdown {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 180px;
+  min-width: 200px;
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
   z-index: 200;
   animation: scaleIn 0.15s ease;
+  background: rgba(7, 11, 22, 0.95);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border-subtle);
 }
 
 .watch-page__server-option {
@@ -129,7 +137,7 @@
 }
 
 .watch-page__server-option:hover {
-  background: rgba(255,255,255,0.06);
+  background: rgba(123, 110, 246, 0.08);
   color: var(--text-primary);
 }
 
@@ -147,6 +155,8 @@
   margin: 0 auto;
   background: #000;
   overflow: hidden;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.6), 0 0 60px rgba(123, 110, 246, 0.04);
 }
 
 .watch-page__player {
@@ -156,12 +166,12 @@
 }
 
 .watch-page__launcher-notice {
-  margin: 10px 20px 0;
-  padding: 10px 12px;
+  margin: 12px 20px 0;
+  padding: 10px 14px;
   border-radius: var(--radius-md);
-  background: rgba(245, 158, 11, 0.16);
-  border: 1px solid rgba(245, 158, 11, 0.32);
-  color: #fde68a;
+  background: rgba(123, 110, 246, 0.08);
+  border: 1px solid rgba(123, 110, 246, 0.2);
+  color: var(--accent-warm);
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -206,7 +216,7 @@
 .watch-page__season-btn {
   padding: 6px 16px;
   border-radius: var(--radius-full);
-  background: rgba(255,255,255,0.06);
+  background: rgba(123, 110, 246, 0.06);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   font-size: 0.8rem;
@@ -217,9 +227,10 @@
 }
 
 .watch-page__season-btn.active {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
+  background: var(--accent-gradient);
+  border-color: transparent;
   color: white;
+  box-shadow: 0 0 14px rgba(123, 110, 246, 0.2);
 }
 
 .watch-page__episode-grid {
@@ -234,7 +245,7 @@
 .watch-page__episode-btn {
   padding: 8px 16px;
   border-radius: var(--radius-md);
-  background: rgba(255,255,255,0.04);
+  background: rgba(123, 110, 246, 0.04);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   font-size: 0.8rem;
@@ -244,13 +255,14 @@
 }
 
 .watch-page__episode-btn:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(123, 110, 246, 0.1);
   color: var(--text-primary);
+  border-color: var(--border-light);
 }
 
 .watch-page__episode-btn.active {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
+  background: var(--accent-gradient);
+  border-color: transparent;
   color: white;
   box-shadow: var(--shadow-glow);
 }
@@ -279,5 +291,9 @@
   .watch-page__launcher-notice {
     margin: 8px 12px 0;
     font-size: 0.76rem;
+  }
+  .watch-page__player-wrapper {
+    width: 100%;
+    border-radius: 0;
   }
 }

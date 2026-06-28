@@ -1,5 +1,5 @@
 .admin-container {
-  padding: 100px 20px 40px;
+  padding: 100px 24px 80px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -12,8 +12,11 @@
 .admin-header h1 {
   font-size: 2.5rem;
   font-weight: 800;
-  color: var(--text-primary);
   margin-bottom: 10px;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-warm) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .admin-header p {
@@ -30,17 +33,17 @@
 
 .stat-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   padding: 30px;
   text-align: center;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all var(--transition-base);
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-md), 0 0 20px rgba(123, 110, 246, 0.08);
+  border-color: var(--border-accent);
 }
 
 .stat-card h3 {
@@ -50,18 +53,19 @@
 }
 
 .stat-card p {
-  font-size: 3rem;
-  font-weight: 800;
+  font-size: 3.2rem;
+  font-weight: 900;
   color: var(--text-primary);
-  background: linear-gradient(135deg, var(--accent-primary), #ffb347);
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  line-height: 1.1;
 }
 
 .admin-section {
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   padding: 30px;
   overflow-x: auto;
 }
@@ -69,7 +73,7 @@
 .admin-section h2 {
   font-size: 1.8rem;
   color: var(--text-primary);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .users-table {
@@ -79,55 +83,61 @@
 
 .users-table th,
 .users-table td {
-  padding: 15px;
+  padding: 16px;
   text-align: right;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .users-table th {
   font-weight: 600;
   color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .users-table td {
   color: var(--text-primary);
+  font-size: 0.95rem;
 }
 
 .role-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
   font-size: 0.85rem;
   font-weight: 600;
   text-transform: capitalize;
+  border: 1px solid transparent;
 }
 
 .role-badge.admin {
-  background: rgba(255, 179, 71, 0.2);
-  color: var(--accent-primary);
+  background: rgba(123, 110, 246, 0.15);
+  color: var(--accent-warm);
+  border-color: rgba(123, 110, 246, 0.3);
 }
 
 .role-badge.user {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-muted);
+  border-color: var(--border-subtle);
 }
 
 .delete-btn {
-  background: rgba(255, 71, 87, 0.1);
-  color: #ff4757;
-  border: 1px solid rgba(255, 71, 87, 0.2);
-  padding: 6px 12px;
-  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .delete-btn:hover {
-  background: #ff4757;
-  color: white;
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .delete-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }

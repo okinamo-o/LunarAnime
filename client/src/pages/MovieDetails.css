@@ -11,7 +11,7 @@
   position: relative;
   height: 60vh;
   min-height: 400px;
-  max-height: 600px;
+  max-height: 620px;
   overflow: hidden;
 }
 
@@ -27,8 +27,13 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 70%;
-  background: linear-gradient(to top, var(--bg-primary) 0%, rgba(6,6,10,0.6) 50%, transparent 100%);
+  height: 75%;
+  background: linear-gradient(
+    to top,
+    var(--bg-primary) 0%,
+    rgba(7, 11, 22, 0.7) 45%,
+    transparent 100%
+  );
 }
 
 .details-page__hero-gradient-left {
@@ -36,8 +41,8 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: 40%;
-  background: linear-gradient(to right, rgba(6,6,10,0.6), transparent);
+  width: 45%;
+  background: linear-gradient(to right, rgba(7, 11, 22, 0.7), transparent);
 }
 
 .details-page__body {
@@ -49,7 +54,7 @@
 
 .details-page__main {
   display: flex;
-  gap: 40px;
+  gap: 44px;
   margin-bottom: 48px;
 }
 
@@ -60,8 +65,13 @@
 .details-page__poster {
   width: 280px;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(123, 110, 246, 0.08);
   border: 1px solid var(--border-subtle);
+  transition: transform var(--transition-base);
+}
+
+.details-page__poster:hover {
+  transform: scale(1.02);
 }
 
 .details-page__info-col {
@@ -71,7 +81,12 @@
 
 .details-page__title {
   font-size: clamp(1.8rem, 4vw, 2.8rem);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C8D4F0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .details-page__meta {
@@ -85,13 +100,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .details-page__genre-tag {
   padding: 6px 16px;
   border-radius: var(--radius-full);
-  background: rgba(255,255,255,0.06);
+  background: rgba(123, 110, 246, 0.06);
   border: 1px solid var(--border-subtle);
   font-size: 0.8rem;
   font-weight: 500;
@@ -100,8 +115,9 @@
 }
 
 .details-page__genre-tag:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(123, 110, 246, 0.14);
   color: var(--text-primary);
+  border-color: var(--border-accent);
 }
 
 .details-page__overview-wrapper {
@@ -111,7 +127,7 @@
 .details-page__overview {
   font-size: 0.95rem;
   color: var(--text-secondary);
-  line-height: 1.7;
+  line-height: 1.8;
 }
 
 .details-page__overview.collapsed {
@@ -131,11 +147,12 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .details-page__read-more:hover {
-  color: #ff6b35;
+  color: var(--accent-secondary);
+  text-shadow: 0 0 10px var(--accent-glow);
 }
 
 .details-page__actions {
@@ -146,7 +163,7 @@
 }
 
 .btn-secondary--active {
-  background: rgba(229, 9, 20, 0.15);
+  background: rgba(123, 110, 246, 0.15);
   border-color: var(--accent-primary);
   color: var(--accent-primary);
 }
@@ -167,7 +184,7 @@
   font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .details-page__crew-name {
@@ -213,7 +230,7 @@
 .details-page__season-tab {
   padding: 8px 18px;
   border-radius: var(--radius-full);
-  background: rgba(255,255,255,0.06);
+  background: rgba(123, 110, 246, 0.06);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   font-weight: 600;
@@ -223,13 +240,15 @@
 }
 
 .details-page__season-tab:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(123, 110, 246, 0.12);
+  border-color: var(--border-light);
 }
 
 .details-page__season-tab.active {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
+  background: var(--accent-gradient);
+  border-color: transparent;
   color: white;
+  box-shadow: 0 0 14px rgba(123, 110, 246, 0.2);
 }
 
 .details-page__episodes-hint {

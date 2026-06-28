@@ -1,5 +1,5 @@
 .carousel-section {
-  margin-bottom: 48px;
+  margin-bottom: 52px;
 }
 
 .carousel-wrapper {
@@ -11,7 +11,7 @@
   overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding: 0 24px;
+  padding: 0 28px;
 }
 
 .carousel-scroll::-webkit-scrollbar {
@@ -20,8 +20,8 @@
 
 .carousel-track {
   display: flex;
-  gap: 16px;
-  padding: 8px 0 16px;
+  gap: 18px;
+  padding: 8px 0 20px;
 }
 
 .carousel-arrow {
@@ -35,8 +35,8 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: var(--bg-glass-heavy);
-  backdrop-filter: blur(12px);
+  background: rgba(7, 11, 22, 0.8);
+  backdrop-filter: blur(16px);
   color: var(--text-primary);
   border: 1px solid var(--border-light);
   cursor: pointer;
@@ -50,8 +50,10 @@
 }
 
 .carousel-arrow:hover {
-  background: rgba(255,255,255,0.15);
+  background: rgba(123, 110, 246, 0.2);
+  border-color: var(--border-accent);
   transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 0 20px rgba(123, 110, 246, 0.15);
 }
 
 .carousel-arrow--left {
@@ -67,6 +69,6 @@
     display: none;
   }
   .carousel-section {
-    margin-bottom: 32px;
+    margin-bottom: 36px;
   }
 }

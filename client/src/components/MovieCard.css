@@ -6,7 +6,7 @@
 }
 
 .movie-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-10px);
 }
 
 .movie-card__poster-wrapper {
@@ -15,12 +15,14 @@
   overflow: hidden;
   aspect-ratio: 2/3;
   background: var(--bg-card);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--transition-base);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-base);
+  border: 1px solid var(--border-subtle);
 }
 
 .movie-card:hover .movie-card__poster-wrapper {
-  box-shadow: var(--shadow-lg), 0 0 30px rgba(229, 9, 20, 0.15);
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(123, 110, 246, 0.12);
+  border-color: rgba(123, 110, 246, 0.2);
 }
 
 .movie-card__poster {
@@ -31,7 +33,7 @@
 }
 
 .movie-card:hover .movie-card__poster {
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
 
 .movie-card__overlay {
@@ -40,7 +42,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.5);
+  background: linear-gradient(180deg, transparent 0%, rgba(7, 11, 22, 0.7) 100%);
   opacity: 0;
   transition: opacity var(--transition-base);
 }
@@ -56,11 +58,12 @@
   width: 52px;
   height: 52px;
   border-radius: var(--radius-full);
-  background: var(--accent-primary);
+  background: var(--accent-gradient);
   color: white;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   transition: all var(--transition-base);
   text-decoration: none;
+  box-shadow: 0 0 20px rgba(123, 110, 246, 0.3);
 }
 
 .movie-card__play-btn:hover {
@@ -75,7 +78,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(7, 11, 22, 0.6);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
@@ -89,7 +92,7 @@
 }
 
 .movie-card__remove-btn:hover {
-  background: #ff4d4d;
+  background: rgba(239, 68, 68, 0.8);
   transform: scale(1.1);
   border-color: transparent;
   opacity: 1;
@@ -102,13 +105,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
-  background: rgba(0,0,0,0.7);
+  padding: 4px 10px;
+  background: rgba(7, 11, 22, 0.7);
   backdrop-filter: blur(8px);
   border-radius: var(--radius-full);
   font-size: 0.72rem;
   font-weight: 700;
   color: white;
+  border: 1px solid var(--border-subtle);
 }
 
 .movie-card__badges {
@@ -122,48 +126,48 @@
 }
 
 .movie-card__badge {
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: var(--radius-sm);
-  font-size: 0.6rem;
-  font-weight: 800;
+  font-size: 0.62rem;
+  font-weight: 700;
   color: white;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .movie-card__badge--type.anime {
-  background: rgba(168, 85, 247, 0.8); /* Purple for Anime */
-  border-color: rgba(168, 85, 247, 0.4);
+  background: rgba(123, 110, 246, 0.75);
+  border-color: rgba(123, 110, 246, 0.35);
 }
 
 .movie-card__badge--type.tv {
-  background: rgba(59, 130, 246, 0.8); /* Blue for TV */
-  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(91, 164, 245, 0.75);
+  border-color: rgba(91, 164, 245, 0.35);
 }
 
 .movie-card__badge--type.movie {
-  background: rgba(229, 9, 20, 0.8); /* Red for Movie */
-  border-color: rgba(229, 9, 20, 0.4);
+  background: rgba(196, 181, 253, 0.75);
+  border-color: rgba(196, 181, 253, 0.35);
 }
 
 .movie-card__badge--source {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(7, 11, 22, 0.6);
   font-size: 0.55rem;
   opacity: 0.9;
 }
 
 .movie-card__badge--source.source-9anime {
-  color: #a855f7;
+  color: #A78BFA;
 }
 
 .movie-card__badge--source.source-123chill {
-  color: #3b82f6;
+  color: #5BA4F5;
 }
 
 .movie-card__info {
-  padding: 10px 4px 0;
+  padding: 12px 4px 0;
 }
 
 .movie-card__title {
@@ -173,7 +177,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  color: var(--text-primary);
+  transition: color var(--transition-fast);
+}
+
+.movie-card:hover .movie-card__title {
+  color: var(--accent-warm);
 }
 
 .movie-card__year {
