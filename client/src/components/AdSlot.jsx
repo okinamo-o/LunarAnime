@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useId } from 'react';
 import ADS_CONFIG from '../config/ads';
 import './AdSlot.css';
 
@@ -45,6 +45,7 @@ function getAdContent(type) {
  */
 export default function AdSlot({ type = 'banner', className = '' }) {
   const containerRef = useRef(null);
+  const stableId = useId();
 
   useEffect(() => {
     if (!ADS_CONFIG.ENABLED || !containerRef.current) return;
@@ -81,7 +82,7 @@ export default function AdSlot({ type = 'banner', className = '' }) {
   return (
     <div
       ref={containerRef}
-      id={`ad-slot-${type}-${Math.random().toString(36).substr(2, 9)}`}
+      id={`ad-slot-${type}-${stableId}`}
       className={`ad-slot ad-slot--${type} ${className}`}
       data-ad-type={type}
     >
@@ -125,7 +126,7 @@ export function PopunderLoader() {
     document.head.appendChild(script);
 
     return () => {
-      try { document.head.removeChild(script); } catch {}
+      try { document.head.removeChild(script); } catch { /* ignore */ }
     };
   }, []);
 

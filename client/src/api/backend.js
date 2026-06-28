@@ -1,10 +1,8 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const getHeaders = () => {
-  const user = JSON.parse(localStorage.getItem('lunaranime_user') || 'null');
   return {
-    'Content-Type': 'application/json',
-    ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {})
+    'Content-Type': 'application/json'
   };
 };
 
@@ -15,28 +13,41 @@ async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
   const headers = getHeaders();
   
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      ...headers,
-      ...options.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
 
-  const data = await res.json().catch(() => ({}));
+  try {
+    const res = await fetch(url, {
+      ...options,
+      credentials: 'include', // SEC-005: Send httpOnly cookies with requests
+      signal: controller.signal,
+      headers: {
+        ...headers,
+        ...options.headers,
+      },
+    });
+    clearTimeout(timeoutId);
 
-  if (res.status === 401) {
-    // Dispatch global event for AuthContext to handle logout
-    window.dispatchEvent(new CustomEvent('lunar_unauthorized'));
-    localStorage.removeItem('lunaranime_user');
-    throw new Error(data.message || 'Session expired');
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 401) {
+      // Dispatch global event for AuthContext to handle logout
+      window.dispatchEvent(new CustomEvent('lunar_unauthorized'));
+      throw new Error(data.message || 'Session expired');
+    }
+
+    if (!res.ok) {
+      throw new Error(data.message || `API Error: ${res.status}`);
+    }
+
+    return data;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('انتهت مهلة الاتصال بالسيرفر.');
+    }
+    throw err;
   }
-
-  if (!res.ok) {
-    throw new Error(data.message || `API Error: ${res.status}`);
-  }
-
-  return data;
 }
 
 // Auth
@@ -51,6 +62,13 @@ export const loginUser = async (username, password) =>
     method: 'POST',
     body: JSON.stringify({ username, password })
   });
+
+export const logoutUser = async () => 
+  request('/auth/logout', {
+    method: 'POST'
+  });
+
+export const getMe = async () => request('/auth/me');
 
 // Watchlist
 export const getWatchlist = () => request('/watchlist');

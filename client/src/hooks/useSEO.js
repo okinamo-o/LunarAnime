@@ -16,8 +16,6 @@ export default function useSEO({ title, description }) {
     
     // Set document title
     document.title = pageTitle;
-    
-    console.log(`[SEO] Title set to: ${pageTitle} for path: ${location.pathname}`);
 
     // Update Meta Description
     let metaDesc = document.querySelector('meta[name="description"]');

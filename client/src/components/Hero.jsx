@@ -4,13 +4,21 @@ import { Play, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getTrending, getImageUrl } from '../api/animeClient'
 import './Hero.css'
 
-export default function Hero() {
+export default function Hero({ items: propItems }) {
   const [movies, setMovies] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const timerRef = useRef(null)
 
   useEffect(() => {
+    // PERF-001: Use prop data instead of fetching independently
+    if (propItems && propItems.length > 0) {
+      const filtered = propItems.filter(m => m.poster).slice(0, 6)
+      setMovies(filtered)
+      setLoading(false)
+      return
+    }
+    // Fallback: fetch if no props provided
     const load = async () => {
       try {
         const trendData = await getTrending()
@@ -24,7 +32,7 @@ export default function Hero() {
       }
     }
     load()
-  }, [])
+  }, [propItems])
 
   useEffect(() => {
     if (movies.length <= 1) return
@@ -66,12 +74,16 @@ export default function Hero() {
               src={getImageUrl(m.poster)}
               alt=""
               className="hero__backdrop-img hero__backdrop-img--blur"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "auto"}
             />
             {/* Sharp foreground layer - 'zoomed out' relative to cover */}
             <img
               src={getImageUrl(m.poster)}
               alt={m.title}
               className="hero__backdrop-img hero__backdrop-img--main"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchpriority={i === 0 ? "high" : "auto"}
             />
           </div>
         ))}

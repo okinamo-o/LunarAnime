@@ -14,9 +14,20 @@ export const getBackdropUrl = (path) => path ? getImageUrl(path) : null;
 
 const fetchProxy = async (params) => {
   const query = new URLSearchParams(params).toString();
-  const res = await fetch(`${PROXY_BASE}?${query}`);
-  if (!res.ok) throw new Error(`Proxy Error: ${res.status}`);
-  return res.json();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  try {
+    const res = await fetch(`${PROXY_BASE}?${query}`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) throw new Error(`Proxy Error: ${res.status}`);
+    return res.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.');
+    }
+    throw err;
+  }
 };
 
 export const getTrending = () => fetchProxy({ action: 'trending' });

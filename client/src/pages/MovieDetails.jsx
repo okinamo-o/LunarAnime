@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useLocation, Link, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { Play, Plus, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { getDetails, getImageUrl } from '../api/animeClient'
 import { addToWatchlist, removeFromWatchlist, getWatchlist } from '../api/backend'
@@ -12,7 +12,6 @@ import './MovieDetails.css'
 
 export default function MovieDetails() {
   const { id } = useParams()
-  const location = useLocation()
   const mediaType = 'anime'
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -39,7 +38,9 @@ export default function MovieDetails() {
           try {
             const wl = await getWatchlist()
             setInWatchlist(wl.some(i => i.animeId.toString() === id.toString()))
-          } catch {}
+          } catch (e) {
+            console.warn('Could not load watchlist status', e)
+          }
         }
       } catch (err) {
         console.error('Failed to load details:', err)

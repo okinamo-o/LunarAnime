@@ -38,7 +38,7 @@ function parseAnimeGrid(html) {
     
     const isEpisode = link.includes('/episode/');
     let slug = '';
-    const match = link.match(/\/(anime|episode)\/([^\/]+)/);
+    const match = link.match(/\/(anime|episode)\/([^/]+)/);
     if (match) slug = match[2];
 
     if (!slug) return;
@@ -90,7 +90,7 @@ export async function getDetails(slug) {
     const eps = [];
     $doc('a').each((i, el) => {
       const epLink = $doc(el).attr('href') || '';
-      const epMatch = epLink.match(/\/episode\/([^\/]+)/);
+      const epMatch = epLink.match(/\/episode\/([^/]+)/);
       if (!epMatch) return;
       
       const rawSlug = epMatch[1];

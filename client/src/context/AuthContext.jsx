@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { getMe, logoutUser } from '../api/backend';
 
 const AuthContext = createContext(null);
 
@@ -7,13 +8,21 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('lunaranime_user');
-    if (stored) {
+    const initAuth = async () => {
       try {
-        setUser(JSON.parse(stored));
-      } catch { /* ignore */ }
-    }
-    setLoading(false);
+        const userData = await getMe();
+        if (userData && userData._id) {
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    initAuth();
 
     // Global listener for token invalidation
     const handleUnauthorized = () => {
@@ -25,12 +34,15 @@ export function AuthProvider({ children }) {
 
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('lunaranime_user', JSON.stringify(userData));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await logoutUser();
+    } catch (e) {
+      console.warn('Logout request failed', e);
+    }
     setUser(null);
-    localStorage.removeItem('lunaranime_user');
   };
 
   return (
@@ -40,4 +52,5 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

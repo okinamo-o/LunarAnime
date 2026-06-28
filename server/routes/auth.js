@@ -2,9 +2,19 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
-const { JWT_SECRET } = require('../middleware/auth');
+const { JWT_SECRET, protect } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Helper to set cookie
+const setTokenCookie = (res, token) => {
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
+};
 
 // Rate limiters to prevent brute-force attacks
 const loginLimiter = rateLimit({
@@ -23,7 +33,7 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const generateToken = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: '30d' });
+const generateToken = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: '7d' });
 
 // POST /api/auth/register
 router.post('/register', registerLimiter, async (req, res) => {
@@ -45,20 +55,20 @@ router.post('/register', registerLimiter, async (req, res) => {
     
     // Convert _id to string to ensure JWT compatibility
     const token = generateToken(user._id.toString());
+    setTokenCookie(res, token);
 
     res.status(201).json({
       _id: user._id,
       username: user.username,
       email: user.email,
-      role: user.role,
-      token
+      role: user.role
     });
   } catch (err) {
     console.error('Registration Error Details:', err);
     if (err.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Validation failed', errors: err.errors });
+      return res.status(400).json({ message: 'فشل التحقق من البيانات' });
     }
-    res.status(500).json({ message: 'Server error during registration', error: err.message });
+    res.status(500).json({ message: 'حدث خطأ في السيرفر أثناء التسجيل' });
   }
 });
 
@@ -66,6 +76,9 @@ router.post('/register', registerLimiter, async (req, res) => {
 router.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   try {
+    if (!username || !password) {
+      return res.status(400).json({ message: 'اسم المستخدم وكلمة المرور مطلوبان' });
+    }
     const user = await User.findOne({ 
       $or: [
         { username: username.trim() }, 
@@ -74,20 +87,43 @@ router.post('/login', loginLimiter, async (req, res) => {
     });
     
     if (user && (await user.matchPassword(password))) {
+      const token = generateToken(user._id.toString());
+      setTokenCookie(res, token);
+      
       res.json({
         _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role,
-        token: generateToken(user._id.toString())
+        role: user.role
       });
     } else {
       res.status(401).json({ message: 'Invalid credentials' });
     }
   } catch (err) {
     console.error('Login Error Details:', err);
-    res.status(500).json({ message: 'Server error during login', error: err.message });
+    res.status(500).json({ message: 'حدث خطأ في السيرفر أثناء تسجيل الدخول' });
   }
+});
+
+// GET /api/auth/me
+router.get('/me', protect, async (req, res) => {
+  res.json({
+    _id: req.user._id,
+    username: req.user.username,
+    email: req.user.email,
+    role: req.user.role
+  });
+});
+
+// POST /api/auth/logout
+router.post('/logout', (req, res) => {
+  res.cookie('token', 'none', {
+    expires: new Date(0),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+  res.status(200).json({ success: true, message: 'تم تسجيل الخروج بنجاح' });
 });
 
 module.exports = router;

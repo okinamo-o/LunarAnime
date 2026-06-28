@@ -2,46 +2,45 @@ require('dotenv').config();
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 
-const MONGO_URI = 'mongodb+srv://okinamo:frivE%40789456123@cluster0.1hdwciy.mongodb.net/lunaranime?appName=Cluster0';
+// Read from environment variables — NEVER hardcode credentials
+const MONGO_URI = process.env.MONGO_URI;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'AdminLouay';
+
+if (!MONGO_URI || !ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error('❌ Missing required environment variables.');
+  console.error('   Set these in your .env file:');
+  console.error('   MONGO_URI=mongodb+srv://...');
+  console.error('   ADMIN_EMAIL=your@email.com');
+  console.error('   ADMIN_PASSWORD=your_secure_password');
+  console.error('   ADMIN_USERNAME=YourAdminName (optional, defaults to AdminLouay)');
+  process.exit(1);
+}
 
 const setupAdmin = async () => {
   try {
     await mongoose.connect(MONGO_URI);
     console.log('✅ Connected to MongoDB');
 
-    const email = 'louayhamdi438@gmail.com';
-    const password = 'frivE789456123';
-    const username = 'AdminLouay';
-
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email: ADMIN_EMAIL });
 
     if (user) {
       user.role = 'admin';
-      const salt = await bcrypt.genSalt(12);
-      user.password = await bcrypt.hash(password, salt);
-      // We use save() but since pre-save hooks hash it again, we need to bypass it or not manually hash it here.
-      // Wait, in User.js we have:
-      // userSchema.pre('save', async function () {
-      //   if (!this.isModified('password')) return;
-      //   const salt = await bcrypt.genSalt(12);
-      //   this.password = await bcrypt.hash(this.password, salt);
-      // });
-      // So we just set the plaintext password and let pre-save handle it.
-      user.password = password;
+      user.password = ADMIN_PASSWORD; // pre-save hook will hash this
       await user.save();
-      console.log(`✅ Success! Updated existing user (${email}) to Admin and updated password.`);
+      console.log(`✅ Success! Updated existing user (${ADMIN_EMAIL}) to Admin.`);
     } else {
       user = new User({
-        username,
-        email,
-        password, // pre-save will hash this
+        username: ADMIN_USERNAME,
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD, // pre-save hook will hash this
         role: 'admin'
       });
       await user.save();
-      console.log(`✅ Success! Created new Admin account for ${email}.`);
+      console.log(`✅ Success! Created new Admin account for ${ADMIN_EMAIL}.`);
     }
 
     process.exit(0);

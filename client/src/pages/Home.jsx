@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Hero from '../components/Hero'
 import MovieCarousel from '../components/MovieCarousel'
 import AdSlot from '../components/AdSlot'
@@ -20,8 +20,10 @@ export default function Home() {
   const [latestEpisodes, setLatestEpisodes] = useState([])
   const [continueWatching, setContinueWatching] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const load = async () => {
+  const load = useCallback(async () => {
+    setError(null)
     try {
       const [trendData, popData, latestData] = await Promise.all([
         getTrending(),
@@ -49,29 +51,29 @@ export default function Home() {
             .reverse()
           setContinueWatching(ongoing)
         } catch (wlErr) {
-          console.warn('Watchlist unavailable (not logged in?):', wlErr.message)
+          console.warn('Watchlist unavailable:', wlErr.message)
         }
       }
     } catch (err) {
       console.error('Failed to load home data:', err)
+      setError(err.message || 'فشل في تحميل البيانات')
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     load()
-  }, [user])
+  }, [load])
 
-  const handleRemoveHome = async (id, type) => {
+  const handleRemoveHome = useCallback(async (id) => {
     try {
-      await removeFromWatchlist(id, type)
-      // Refresh list locally
+      await removeFromWatchlist(id)
       setContinueWatching(prev => prev.filter(i => i.id !== id))
     } catch (err) {
       console.error('Failed to remove from history:', err)
     }
-  }
+  }, [])
 
   const showAds = ADS_CONFIG.ENABLED && ADS_CONFIG.placements.homeBanners
 
@@ -86,9 +88,15 @@ export default function Home() {
               ))}
            </div>
         </div>
+      ) : error ? (
+        <div className="container" style={{ padding: '100px 24px', textAlign: 'center' }}>
+          <h2 style={{ marginBottom: '16px', color: 'var(--accent-primary)' }}>حدث خطأ</h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>{error}</p>
+          <button className="btn-primary" onClick={load}>🔄 أعد المحاولة</button>
+        </div>
       ) : (
         <>
-          <Hero />
+          <Hero items={trending} />
           <div className="home-page__carousels">
             {continueWatching.length > 0 && (
               <MovieCarousel

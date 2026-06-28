@@ -65,8 +65,8 @@ router.delete('/users/:id', protect, requireAdmin, async (req, res) => {
     }
 
     await User.findByIdAndDelete(req.params.id);
-    await Watchlist.deleteMany({ user: req.params.id });
-    await Rating.deleteMany({ user: req.params.id });
+    await Watchlist.deleteMany({ userId: req.params.id });
+    await Rating.deleteMany({ userId: req.params.id });
     
     res.json({ success: true, message: 'User and their data deleted successfully' });
   } catch (err) {

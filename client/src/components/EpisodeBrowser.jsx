@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import './EpisodeBrowser.css'
 
@@ -8,9 +8,6 @@ export default function EpisodeBrowser({ episodes, currentEpisode, watchedEpisod
   const [jumpInput, setJumpInput] = useState('')
   
   // ... (rest of the component logic)
-
-  // Memoize check to avoid recalculating during renders
-  const isWatched = (epNum) => watchedEpisodes.includes(epNum)
 
   // Build range chunks: 1-50, 51-100, etc.
   const ranges = useMemo(() => {
@@ -46,8 +43,8 @@ export default function EpisodeBrowser({ episodes, currentEpisode, watchedEpisod
 
   const [selectedRange, setSelectedRange] = useState(activeRangeIndex)
 
-  // Sync selected range when the activeRangeIndex changes (e.g., next/prev episode crosses a boundary)
-  useMemo(() => {
+  // REACT-002: Use useEffect instead of useMemo for side effects
+  useEffect(() => {
     setSelectedRange(activeRangeIndex)
   }, [activeRangeIndex])
 

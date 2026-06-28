@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -47,23 +48,48 @@ app.use(helmet());
 // Body parser
 app.use(express.json({ limit: '10kb' })); // Limit body size
 
+// Cookie parser for secure httpOnly JWT tokens
+app.use(cookieParser());
+
 // Sanitize data to prevent NoSQL Injection
 app.use(mongoSanitize());
 
-// Sanitize data to prevent XSS
-app.use(xss());
-
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lunaranime')
   .then(() => console.log('✅ MongoDB connected to lunaranime'))
-  .catch(err => console.error('MongoDB error:', err));
+  .catch(err => {
+    console.error('❌ FATAL: MongoDB connection failed:', err.message);
+    process.exit(1);
+  });
+
+// Reconnection handling
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
+});
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB reconnected');
+});
+
+// Rate limiter for proxy routes to prevent abuse (SEC-010)
+const proxyLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute per IP
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/ratings', ratingRoutes);
-app.use('/api/proxy', proxyRoutes);
+app.use('/api/proxy', proxyLimiter, proxyRoutes);
 app.use('/api/admin', adminRoutes);
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/api/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = dbState === 1 ? 'connected' : dbState === 2 ? 'connecting' : 'disconnected';
+  const status = dbState === 1 ? 'ok' : 'degraded';
+  res.status(status === 'ok' ? 200 : 503).json({ status, database: dbStatus });
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 LunarAnime API running on port ${PORT}`);

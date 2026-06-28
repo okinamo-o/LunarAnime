@@ -4,7 +4,6 @@ import { ArrowRight } from 'lucide-react'
 import { getDetails, getLauncherStream } from '../api/animeClient'
 import { updateWatchProgress, getWatchlist } from '../api/backend'
 import { useAuth } from '../context/AuthContext'
-import CustomLauncherPlayer from '../components/CustomLauncherPlayer'
 import EpisodeBrowser from '../components/EpisodeBrowser'
 import AdSlot from '../components/AdSlot'
 import ADS_CONFIG from '../config/ads'
@@ -22,6 +21,7 @@ export default function Watch() {
   const [launcherError, setLauncherError] = useState('')
   const [watchedEpisodes, setWatchedEpisodes] = useState([])
   const [activeServer, setActiveServer] = useState(0)
+  const [retryTrigger, setRetryTrigger] = useState(0)
   
   const isInitialLoad = useRef(true)
 
@@ -62,7 +62,7 @@ export default function Watch() {
       }
     }
     loadDetails()
-  }, [type, id, user]) // Removed searchParams to prevent loop
+  }, [type, id, user, searchParams])
 
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function Watch() {
     return () => {
       cancelled = true
     }
-  }, [loading, type, id, season, episode, details])
+  }, [loading, type, id, season, episode, details, retryTrigger])
 
   // Auto-save progress whenever you watch anything (including first load)
   useEffect(() => {
@@ -127,13 +127,12 @@ export default function Watch() {
     
     setSearchParams({ s: season, e: episode }, { replace: true })
     saveProgress()
-  }, [season, episode, type, id, user, details, setSearchParams])
+  }, [season, episode, type, id, user, details, setSearchParams, loading])
 
   const title = details?.title || details?.name || 'جاري التحميل...'
   
   // Animelek doesn't have real seasons — all episodes are in one list
   const currentSeason = details?.seasons?.[0] || { episodes: [] }
-  const totalEpisodes = currentSeason.episodes.length || 0
 
   const handleNextEpisode = () => {
     if (!currentSeason.episodes.length) return;
@@ -175,8 +174,9 @@ export default function Watch() {
       </div>
 
       {launcherError && (
-        <div className="watch-page__launcher-notice">
-          {launcherError}
+        <div className="watch-page__launcher-notice" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{launcherError}</span>
+          <button className="btn-primary" onClick={() => setRetryTrigger(prev => prev + 1)} style={{ padding: '4px 12px', fontSize: '0.8rem' }}>🔄 إعادة المحاولة</button>
         </div>
       )}
 

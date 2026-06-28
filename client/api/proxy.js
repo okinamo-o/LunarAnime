@@ -1,3 +1,4 @@
+/* global Buffer */
 import * as scrapers from './_lib/scrapers.js';
 import axios from 'axios';
 
@@ -26,14 +27,16 @@ export default async function handler(req, res) {
       case 'launcher':
         result = await scrapers.resolveLauncherStream({ id, episode });
         break;
-      case 'image':
+      case 'image': {
         const imgRes = await axios.get(req.query.url, { responseType: 'arraybuffer', headers: { 'User-Agent': 'Mozilla/5.0' } });
         res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/jpeg');
         return res.send(Buffer.from(imgRes.data));
-      case 'subtitle':
+      }
+      case 'subtitle': {
         const subRes = await axios.get(req.query.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         res.setHeader('Content-Type', 'text/vtt');
         return res.send(subRes.data);
+      }
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
