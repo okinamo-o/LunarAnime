@@ -85,7 +85,7 @@ export async function getDetails(slug) {
 
   const title = $('.anime-details h1').text().trim() || $('.title').first().text().trim() || slug;
   const poster = $('.anime-poster img').attr('src') || $('.image img').attr('src') || '';
-  const overview = $('.story p').text().trim() || $('.anime-story').text().trim() || 'لا توجد قصة متاحة.';
+  const overview = $('.story p').text().trim() || $('.anime-story').text().trim() || $('.anime-details .content p, .media-box .content p').first().text().trim() || 'لا توجد قصة متاحة.';
 
   // Extract episodes from Animelek
   const eps = [];
@@ -136,57 +136,33 @@ export async function getDetails(slug) {
 // Since Animelek hides iframe links in JS, we fall back to Anime4up just for the video player extraction as requested.
 
 export async function resolveLauncherStream({ id, episode }) {
-  // To get the video player from anime4up, we must construct the anime4up episode URL using the Animelek slug.
-  // This is a best-effort mapping since the slugs might differ slightly between sites.
-  // Example Animelek slug: "one-piece" -> Anime4up episode url: "one-piece-episode-1"
+  // First, get the Animelek episode URL by parsing the details page
+  const details = await getDetails(id);
+  const epObj = details.seasons[0].episodes.find(e => e.episodeNumber == episode);
   
-  const searchUrl = `${ANIME4UP_URL}/?search_param=animes&s=${encodeURIComponent(id)}`;
-  const searchRes = await axios.get(searchUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  const $search = load(searchRes.data);
-  
-  let anime4upLink = $search('.anime-card-themex h3 a').first().attr('href');
-  
-  if (!anime4upLink) {
-    throw new Error('Anime not found on video server');
+  if (!epObj) {
+    throw new Error('Episode not found on video server');
   }
-
-  const { data: detailsData } = await axios.get(anime4upLink, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  const $details = load(detailsData);
   
-  let epUrl = null;
-  $details('.episodes-card-title a').each((i, el) => {
-    const link = $details(el).attr('href');
-    const txt = $details(el).text();
-    if (txt.includes(episode.toString())) {
-      epUrl = link;
-    }
-  });
-
-  if (!epUrl) {
-      // Fallback: try to guess the episode URL
-      const a4upSlug = anime4upLink.match(/\/anime\/([^/]+)/);
-      if (a4upSlug) {
-          epUrl = `${ANIME4UP_URL}/episode/${a4upSlug[1]}-episode-${episode}/`;
-      } else {
-          throw new Error('Episode not found on video server');
-      }
-  }
-
-  const { data: epData } = await axios.get(epUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  const $ep = load(epData);
+  const epUrl = epObj.url;
+  const { data } = await axios.get(epUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
+  
   const iframes = [];
-
+  
+  // Animelek embeds video players using card.php?random=URL
+  const regex = /https?:\/\/[^\s"'<>]+\/card\.php\?random=(https?:\/\/[^\s"'<>&]+)/ig;
+  let match;
+  while ((match = regex.exec(data)) !== null) {
+    iframes.push(decodeURIComponent(match[1]));
+  }
+  
+  // Fallback: look for direct iframes in the HTML
+  const $ep = load(data);
   $ep('iframe').each((i, el) => {
     const src = $ep(el).attr('src');
-    if (src && /share4max|vkvideo|mega|dood|voe|videa|mp4upload|file-upload/.test(src)) iframes.push(src);
-  });
-
-  $ep('.server-list li a, a[data-ep-url]').each((i, el) => {
-    const txt = $ep(el).html() || '';
-    const iframeMatch = txt.match(/<iframe\s+[^>]*src="([^"]+)"/i);
-    if (iframeMatch) iframes.push(iframeMatch[1]);
-    const dataUrl = $ep(el).attr('data-ep-url');
-    if (dataUrl && dataUrl.startsWith('http')) iframes.push(dataUrl);
+    if (src && /share4max|vkvideo|mega|dood|voe|videa|mp4upload|file-upload/.test(src)) {
+      iframes.push(src);
+    }
   });
 
   const unique = [...new Set(iframes)].sort((a, b) => {
