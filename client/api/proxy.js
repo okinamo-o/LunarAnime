@@ -43,6 +43,20 @@ export default async function handler(req, res) {
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
+    // Set CDN caching depending on the action to massively improve speed
+    if (['trending', 'popular', 'latest-episodes'].includes(action)) {
+      // Cache home page lists for 1 hour, serve stale while revalidating for 2 hours
+      res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=7200');
+    } else if (action === 'image') {
+      // Cache images for a year (posters rarely change)
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (action === 'details' || action === 'discover' || action === 'search') {
+      // Cache details and search for 30 minutes
+      res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600');
+    } else if (action === 'launcher') {
+      // Video links might expire quickly, so cache for 10 minutes only
+      res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=1200');
+    }
 
     res.status(200).json(result);
   } catch (err) {
