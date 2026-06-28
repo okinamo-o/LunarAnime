@@ -12,6 +12,9 @@ export default async function handler(req, res) {
       case 'trending':
         result = await scrapers.fetchTrending();
         break;
+      case 'latest-episodes':
+        result = await scrapers.fetchLatestEpisodes();
+        break;
       case 'popular':
         result = await scrapers.fetchPopular();
         break;

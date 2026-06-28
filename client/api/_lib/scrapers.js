@@ -2,7 +2,7 @@ import axios from 'axios';
 import { load } from 'cheerio';
 
 const ANIMELEK_URL = 'https://animelek.top';
-const ANIME4UP_URL = 'https://anime4up.rest';
+const ANIME4UP_URL = 'https://w1.anime4up.rest';
 
 const DEFAULT_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -56,6 +56,12 @@ export async function fetchTrending() {
 export async function fetchPopular() {
   const { data } = await axios.get(`${ANIMELEK_URL}/قائمة-الأنمي/`, { headers: DEFAULT_HEADERS, timeout: 10000 });
   return parseAnimelekGrid(data).slice(0, 15);
+}
+
+export async function fetchLatestEpisodes() {
+  const { data } = await axios.get(ANIMELEK_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
+  const results = parseAnimelekGrid(data);
+  return results.length > 15 ? results.slice(15, 30) : results;
 }
 
 export async function search(query) {
