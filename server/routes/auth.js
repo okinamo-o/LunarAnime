@@ -61,7 +61,8 @@ router.post('/register', registerLimiter, async (req, res) => {
       _id: user._id,
       username: user.username,
       email: user.email,
-      role: user.role
+      role: user.role,
+      token: token
     });
   } catch (err) {
     console.error('Registration Error Details:', err);
@@ -94,7 +95,8 @@ router.post('/login', loginLimiter, async (req, res) => {
         _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        token: token
       });
     } else {
       res.status(401).json({ message: 'Invalid credentials' });

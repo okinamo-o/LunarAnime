@@ -13,13 +13,19 @@ async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
   const headers = getHeaders();
   
+  // Add Bearer token from localStorage if available
+  const token = localStorage.getItem('lunar_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
 
   try {
     const res = await fetch(url, {
       ...options,
-      credentials: 'include', // SEC-005: Send httpOnly cookies with requests
+      credentials: 'omit', // We no longer rely on cookies, so we can omit them to avoid 3P cookie blocks
       signal: controller.signal,
       headers: {
         ...headers,
@@ -51,22 +57,32 @@ async function request(endpoint, options = {}) {
 }
 
 // Auth
-export const registerUser = async (username, email, password) => 
-  request('/auth/register', {
+export const registerUser = async (username, email, password) => {
+  const data = await request('/auth/register', {
     method: 'POST',
     body: JSON.stringify({ username, email, password })
   });
+  if (data.token) localStorage.setItem('lunar_token', data.token);
+  return data;
+};
 
-export const loginUser = async (username, password) => 
-  request('/auth/login', {
+export const loginUser = async (username, password) => {
+  const data = await request('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ username, password })
   });
+  if (data.token) localStorage.setItem('lunar_token', data.token);
+  return data;
+};
 
-export const logoutUser = async () => 
-  request('/auth/logout', {
-    method: 'POST'
-  });
+export const logoutUser = async () => {
+  localStorage.removeItem('lunar_token');
+  try {
+    await request('/auth/logout', { method: 'POST' });
+  } catch (e) {
+    // Ignore logout error if token was already invalid
+  }
+};
 
 export const getMe = async () => request('/auth/me');
 
