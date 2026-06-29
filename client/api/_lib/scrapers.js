@@ -68,7 +68,8 @@ async function formatItemsAndFillPosters(items) {
 }
 
 export async function fetchTrending() {
-  const { data } = await axios.get(ANIMELEK_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
+  // Use most viewed anime for Trending
+  const { data } = await axios.get(`${ANIMELEK_URL}/%D9%82%D8%A7%D8%A6%D9%85%D8%A9-%D8%A7%D9%84%D8%A3%D9%86%D9%85%D9%8A/?order=views`, { headers: DEFAULT_HEADERS, timeout: 10000 });
   return await formatItemsAndFillPosters(parseAnimelekGrid(data).slice(0, 15));
 }
 
@@ -78,9 +79,10 @@ export async function fetchPopular() {
 }
 
 export async function fetchLatestEpisodes() {
+  // Homepage contains the latest episodes
   const { data } = await axios.get(ANIMELEK_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
   const results = parseAnimelekGrid(data);
-  return await formatItemsAndFillPosters(results.length > 15 ? results.slice(15, 30) : results);
+  return await formatItemsAndFillPosters(results.slice(0, 15));
 }
 
 export async function search(query) {
