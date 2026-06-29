@@ -143,6 +143,35 @@ export async function getDetails(slug) {
 
   eps.sort((a, b) => a.episodeNumber - b.episodeNumber);
 
+  // Fallback: If Jikan says there are more episodes, fill in the gaps!
+  let jikanTotal = 0;
+  if (!poster || poster.includes('default.png') || poster.includes('default.jpg')) {
+     // We already fetched Jikan, but let's re-use or fetch it just for episodes
+     // Actually, let's just fetch it explicitly for episodes if Animelek returned very few episodes
+  }
+  
+  try {
+     const { data: jData } = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`, { timeout: 2000 });
+     if (jData && jData.data && jData.data.length > 0) {
+        jikanTotal = jData.data[0].episodes || 0;
+     }
+  } catch (e) {}
+
+  if (jikanTotal > eps.length) {
+    const existingNums = new Set(eps.map(e => e.episodeNumber));
+    for (let i = 1; i <= jikanTotal; i++) {
+       if (!existingNums.has(i)) {
+          eps.push({
+             episodeNumber: i,
+             id: `fallback-${i}`,
+             url: 'anime4up-fallback' // Special flag
+          });
+       }
+    }
+    // Re-sort after adding missing ones
+    eps.sort((a, b) => a.episodeNumber - b.episodeNumber);
+  }
+
   const genres = [];
   $('.anime-genres a, .genres a').each((i, el) => {
     const g = $(el).text().trim();
@@ -167,7 +196,6 @@ export async function getDetails(slug) {
 // Since Animelek hides iframe links in JS, we fall back to Anime4up just for the video player extraction as requested.
 
 export async function resolveLauncherStream({ id, episode }) {
-  // First, get the Animelek episode URL by parsing the details page
   const details = await getDetails(id);
   const epObj = details.seasons[0].episodes.find(e => e.episodeNumber == episode || e.id == episode || decodeURIComponent(e.id) == decodeURIComponent(episode));
   
@@ -175,20 +203,61 @@ export async function resolveLauncherStream({ id, episode }) {
     throw new Error('Episode not found on video server');
   }
   
-  const epUrl = epObj.url;
-  const { data } = await axios.get(epUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
+  let epUrl = epObj.url;
+  let htmlData = '';
+
+  if (epUrl === 'anime4up-fallback') {
+     // Animelek is missing this episode! Fallback to Anime4up.
+     const searchUrl = `${ANIME4UP_URL}/?search_param=animes&s=${encodeURIComponent(details.title)}`;
+     const { data: searchData } = await axios.get(searchUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
+     const $s = load(searchData);
+     
+     // Get first result link
+     const a4upLink = $s('.anime-card-container a, .anime-card a, .anime-card-details a').first().attr('href');
+     if (!a4upLink) throw new Error('Anime not found on Anime4Up');
+     
+     // Fetch Anime4Up details page
+     const { data: a4upDetails } = await axios.get(a4upLink, { headers: DEFAULT_HEADERS, timeout: 10000 });
+     const $d = load(a4upDetails);
+     
+     // Find the exact episode link
+     let foundA4upEp = '';
+     $d('a[href*="/episode/"]').each((i, el) => {
+        const text = $d(el).text().trim();
+        const numMatch = text.match(/\b\d+\b/);
+        
+        let urlEpNum = null;
+        const decodedUrl = decodeURIComponent($d(el).attr('href'));
+        const urlMatch = decodedUrl.match(/الحلقة-(\d+)/);
+        if (urlMatch) urlEpNum = parseInt(urlMatch[1], 10);
+
+        if ((numMatch && parseInt(numMatch[0], 10) == episode) || urlEpNum == episode) {
+           foundA4upEp = $d(el).attr('href');
+        }
+     });
+     
+     if (!foundA4upEp) throw new Error('Episode not found on Anime4Up either');
+     
+     epUrl = foundA4upEp;
+     const { data } = await axios.get(epUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
+     htmlData = data;
+  } else {
+     // Standard Animelek fetch
+     const { data } = await axios.get(epUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
+     htmlData = data;
+  }
   
   const iframes = [];
   
   // Animelek embeds video players using card.php?random=URL
   const regex = /https?:\/\/[^\s"'<>]+\/card\.php\?random=(https?:\/\/[^\s"'<>&]+)/ig;
   let match;
-  while ((match = regex.exec(data)) !== null) {
+  while ((match = regex.exec(htmlData)) !== null) {
     iframes.push(decodeURIComponent(match[1]));
   }
   
-  // Fallback: look for direct iframes in the HTML
-  const $ep = load(data);
+  // Fallback: look for direct iframes in the HTML (Animelek & Anime4Up both do this sometimes)
+  const $ep = load(htmlData);
   $ep('iframe').each((i, el) => {
     const src = $ep(el).attr('src');
     if (src && /share4max|vkvideo|mega|dood|voe|videa|mp4upload|file-upload/.test(src)) {
