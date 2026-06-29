@@ -36,9 +36,9 @@ export default function Dashboard() {
     }
   }
 
-  const handleRemove = async (animeId) => {
+  const handleRemove = async (animeId, isHistory = false) => {
     try {
-      const updated = await removeFromWatchlist(animeId)
+      const updated = await removeFromWatchlist(animeId, isHistory)
       setItems(updated.reverse())
     } catch (err) {
       console.error(err)
@@ -144,15 +144,13 @@ export default function Dashboard() {
                 >
                   ▶
                 </Link>
-                {activeTab === 'watchlist' && (
-                  <button
-                    className="watchlist-item__action-btn watchlist-item__action-btn--danger"
-                    onClick={() => handleRemove(item.animeId)}
-                    title="إزالة"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
+                <button
+                  className="watchlist-item__action-btn watchlist-item__action-btn--danger"
+                  onClick={() => handleRemove(item.animeId, activeTab === 'history')}
+                  title="إزالة"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
           ))}

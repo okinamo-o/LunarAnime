@@ -95,8 +95,8 @@ export const addToWatchlist = (item) =>
     body: JSON.stringify(item)
   });
 
-export const removeFromWatchlist = (animeId) => 
-  request(`/watchlist/${animeId}`, {
+export const removeFromWatchlist = (animeId, removeHistory = false) => 
+  request(`/watchlist/${animeId}${removeHistory ? '?history=true' : ''}`, {
     method: 'DELETE'
   });
 

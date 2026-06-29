@@ -38,6 +38,19 @@ router.post('/', protect, async (req, res) => {
         isSaved: true
       });
     }
+
+    // Deduplicate to fix any race conditions
+    const uniqueItems = [];
+    const seen = new Set();
+    for (let i = watchlist.items.length - 1; i >= 0; i--) {
+      const it = watchlist.items[i];
+      if (!seen.has(it.animeId.toString())) {
+        seen.add(it.animeId.toString());
+        uniqueItems.unshift(it);
+      }
+    }
+    watchlist.items = uniqueItems;
+
     await watchlist.save();
     res.status(201).json(watchlist.items);
   } catch (err) {
@@ -53,13 +66,36 @@ router.delete('/:animeId', protect, async (req, res) => {
 
     const item = watchlist.items.find(i => i.animeId.toString() === req.params.animeId);
     if (item) {
-      if (item.watchedEpisodesList && item.watchedEpisodesList.length > 0) {
-        // Keep it for watch history, just unsave it
-        item.isSaved = false;
+      if (req.query.history === 'true') {
+        // Remove from watch history
+        item.watchedEpisodesList = [];
+        item.lastEpisode = null;
+        item.lastSeason = null;
+        item.watched = false;
+        
+        if (!item.isSaved) {
+          watchlist.items = watchlist.items.filter(i => i.animeId.toString() !== req.params.animeId);
+        }
       } else {
-        // No watch history, safe to completely remove
-        watchlist.items = watchlist.items.filter(i => i.animeId.toString() !== req.params.animeId);
+        // Remove from Saved list
+        item.isSaved = false;
+        if (!item.watchedEpisodesList || item.watchedEpisodesList.length === 0) {
+          watchlist.items = watchlist.items.filter(i => i.animeId.toString() !== req.params.animeId);
+        }
       }
+
+      // Deduplicate to fix any race conditions
+      const uniqueItems = [];
+      const seen = new Set();
+      for (let i = watchlist.items.length - 1; i >= 0; i--) {
+        const it = watchlist.items[i];
+        if (!seen.has(it.animeId.toString())) {
+          seen.add(it.animeId.toString());
+          uniqueItems.unshift(it);
+        }
+      }
+      watchlist.items = uniqueItems;
+
       await watchlist.save();
     }
     res.json(watchlist.items);
@@ -160,6 +196,18 @@ router.put('/progress/:animeId', protect, async (req, res) => {
     if (posterPath) item.posterPath = posterPath;
     if (backdropPath) item.backdropPath = backdropPath;
     
+    // Deduplicate to fix any race conditions
+    const uniqueItems = [];
+    const seen = new Set();
+    for (let i = watchlist.items.length - 1; i >= 0; i--) {
+      const it = watchlist.items[i];
+      if (!seen.has(it.animeId.toString())) {
+        seen.add(it.animeId.toString());
+        uniqueItems.unshift(it);
+      }
+    }
+    watchlist.items = uniqueItems;
+
     await watchlist.save();
     res.json(watchlist.items);
   } catch (err) {

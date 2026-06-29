@@ -68,7 +68,7 @@ export default function Home() {
 
   const handleRemoveHome = useCallback(async (id) => {
     try {
-      await removeFromWatchlist(id)
+      await removeFromWatchlist(id, true)
       setContinueWatching(prev => prev.filter(i => i.id !== id))
     } catch (err) {
       console.error('Failed to remove from history:', err)
