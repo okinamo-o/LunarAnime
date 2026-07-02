@@ -47,6 +47,58 @@ function rewriteManifest(manifest, originalUrl, originalReferer, cookies = '') {
   });
 }
 
+// Support for Vercel-style ?action=... queries
+router.get('/', async (req, res, next) => {
+  const { action, q, id, episode, category, slug, page } = req.query;
+  if (!action) return next();
+
+  try {
+    const scrapers = await getScrapers();
+    let result;
+    switch (action) {
+      case 'trending':
+        result = await scrapers.fetchTrending();
+        break;
+      case 'latest-episodes':
+        result = await scrapers.fetchLatestEpisodes();
+        break;
+      case 'popular':
+        result = await scrapers.fetchPopular();
+        break;
+      case 'search':
+        result = await scrapers.search(q);
+        break;
+      case 'details':
+        result = await scrapers.getDetails(id);
+        break;
+      case 'discover':
+        result = await scrapers.discover(category, slug, page);
+        break;
+      case 'launcher':
+        result = await scrapers.resolveLauncherStream({ id, episode });
+        break;
+      case 'image':
+        if (!req.query.url) return res.status(400).json({ error: 'Missing url' });
+        if (!isValidUrl(req.query.url)) return res.status(403).json({ error: 'Invalid or forbidden URL' });
+        const imgRes = await axios.get(req.query.url, { responseType: 'stream', headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://w1.anime4up.rest/' } });
+        res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/jpeg');
+        return imgRes.data.pipe(res);
+      case 'subtitle':
+        if (!req.query.url) return res.status(400).json({ error: 'Missing url' });
+        if (!isValidUrl(req.query.url)) return res.status(403).json({ error: 'Invalid or forbidden URL' });
+        const subRes = await axios.get(req.query.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        res.setHeader('Content-Type', 'text/vtt');
+        return res.send(subRes.data);
+      default:
+        return res.status(400).json({ error: 'Invalid action' });
+    }
+    res.json(result);
+  } catch (err) {
+    console.error(`[Express Proxy] Error (${action}):`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/proxy/trending
 router.get(['/trending', '/anime/trending'], async (req, res) => {
   try {

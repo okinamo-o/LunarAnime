@@ -1,4 +1,5 @@
-const PROXY_BASE = '/api/proxy';
+import { API_BASE } from './backend.js';
+const PROXY_BASE = `${API_BASE}/proxy`;
 
 export const getImageUrl = (path) => {
   if (!path || path.includes('default.png') || path.includes('default.jpg')) {
