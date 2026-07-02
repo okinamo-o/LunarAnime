@@ -187,7 +187,41 @@ export async function getDetails(slug) {
         if (e.response?.status !== 404) throw e;
       }
     }
-    if (!data) throw new Error('Anime not found');
+    if (!data) {
+      // Slug didn't match any direct URL — fall back to searching shahiid
+      // Convert slug to search keywords: "re-zero-kara-hajimeru" → "re zero kara hajimeru"
+      const searchTerms = decodeURIComponent(slug)
+        .replace(/-/g, ' ')
+        .replace(/%[0-9a-f]{2}/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .split(' ')
+        .filter(w => w.length > 2) // drop tiny words
+        .slice(0, 4) // limit to 4 words for better results
+        .join(' ');
+      
+      if (searchTerms.length > 3) {
+        try {
+          const searchUrl = `${BASE_URL}/?s=${encodeURIComponent(searchTerms)}`;
+          const { data: searchHtml } = await axios.get(searchUrl, { headers: DEFAULT_HEADERS, timeout: 15000 });
+          const searchResults = parseCardGrid(searchHtml);
+          // Prefer: series > seasons > anime (subtitled) > dubbed versions
+          const bestResult = searchResults.find(r => r._category === 'series') ||
+                             searchResults.find(r => r._category === 'seasons') ||
+                             searchResults.find(r => r._category === 'anime') ||
+                             searchResults.find(r => ['seriesDubbed', 'seasonsDubbed'].includes(r._category)) ||
+                             searchResults[0];
+          
+          if (bestResult && bestResult.id !== slug) {
+            // Recurse with the correct slug from search results
+            return getDetails(bestResult.id);
+          }
+        } catch (searchErr) {
+          console.error('Search fallback failed:', searchErr.message);
+        }
+      }
+      throw new Error('Anime not found');
+    }
 
     if (isEpisodePage) {
       const $ep = load(data);
