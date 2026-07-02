@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const { getSubtitleAsVtt } = require('../services/launcherResolver');
 
-let scrapersPromise = import('../../client/api/_lib/scrapers.js');
+let scrapersPromise = import('../services/scrapers.js');
 
 async function getScrapers() {
   return await scrapersPromise;
