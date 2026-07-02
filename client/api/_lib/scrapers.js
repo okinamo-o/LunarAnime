@@ -1,6 +1,19 @@
 import axios from 'axios';
 import { load } from 'cheerio';
 
+async function proxyGet(url, options = {}) {
+  try {
+    return await axios.get(url, options);
+  } catch (err) {
+    if (err.response && [403, 503].includes(err.response.status)) {
+      console.warn(`[Proxy Fallback] 403/503 on ${url}, using allorigins...`);
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      return await axios.get(proxyUrl, options);
+    }
+    throw err;
+  }
+}
+
 const BASE_URL = 'https://w1.anime4up.rest';
 
 const DEFAULT_HEADERS = {
@@ -66,7 +79,7 @@ async function _fetchHomePage() {
   if (_homeCache.data && (now - _homeCache.timestamp) < CACHE_TTL) {
     return _homeCache.data;
   }
-  const { data } = await axios.get(BASE_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
+  const { data } = await proxyGet(BASE_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
   const results = parseAnimeGrid(data);
   _homeCache = { data: results, timestamp: now };
   return results;
@@ -108,7 +121,7 @@ export async function fetchLatestEpisodes() {
 export async function search(query) {
   try {
     const url = `${BASE_URL}/?search_param=animes&s=${encodeURIComponent(query)}`;
-    const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
+    const { data } = await proxyGet(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
     return parseAnimeGrid(data);
   } catch (err) {
     console.error('Search Error:', err.message);
@@ -121,7 +134,7 @@ export async function discover(category, slugString, page = 1) {
     const slugs = String(slugString).split(',');
     let url = `${BASE_URL}/${category}/${slugs[0]}/`;
     if (page > 1) url += `?page=${page}`;
-    const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
+    const { data } = await proxyGet(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
     return parseAnimeGrid(data);
   } catch (err) {
     console.error('Discover Error:', err.message);
@@ -137,7 +150,7 @@ export async function getDetails(slug) {
 
   try {
     const url = `${BASE_URL}/anime/${slug}`;
-    const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
+    const { data } = await proxyGet(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
     const $ = load(data);
 
     const title = $('.anime-details-title').text().trim() || $('h1').first().text().trim();
@@ -197,7 +210,7 @@ export async function resolveLauncherStream({ id, episode }) {
     url = `${BASE_URL}/episode/${id}-%D8%A7%D9%84%D8%AD%D9%84%D9%82%D8%A9-${episode}/`;
   }
 
-  const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
+  const { data } = await proxyGet(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
   const $ = load(data);
   const iframes = [];
 
