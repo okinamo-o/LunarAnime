@@ -1,11 +1,10 @@
-import { API_BASE } from './backend.js';
-const PROXY_BASE = `${API_BASE}/proxy`;
+const PROXY_BASE = '/api/proxy';
 
 export const getImageUrl = (path) => {
   if (!path || path.includes('default.png') || path.includes('default.jpg')) {
     return 'https://placehold.co/500x750/1a1a25/ffffff?text=No+Image';
   }
-  if (path.includes('anime4up') || path.includes('witanime') || path.includes('animelek')) {
+  if (path.includes('anime4up') || path.includes('witanime') || path.includes('animelek') || path.includes('shahiid-anime')) {
     return `${PROXY_BASE}?action=image&url=${encodeURIComponent(path)}`;
   }
   return path;

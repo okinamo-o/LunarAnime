@@ -80,7 +80,7 @@ router.get('/', async (req, res, next) => {
       case 'image':
         if (!req.query.url) return res.status(400).json({ error: 'Missing url' });
         if (!isValidUrl(req.query.url)) return res.status(403).json({ error: 'Invalid or forbidden URL' });
-        const imgRes = await axios.get(req.query.url, { responseType: 'stream', headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://w1.anime4up.rest/' } });
+        const imgRes = await axios.get(req.query.url, { responseType: 'stream', headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://shahiid-anime.net/' } });
         res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/jpeg');
         return imgRes.data.pipe(res);
       case 'subtitle':
@@ -271,7 +271,7 @@ router.get('/image', async (req, res) => {
       responseType: 'stream',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Referer': 'https://w1.anime4up.rest/',
+        'Referer': 'https://shahiid-anime.net/',
         'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8'
       },
       timeout: 10000

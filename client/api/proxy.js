@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       case 'image': {
         if (!req.query.url) return res.status(400).json({ error: 'Missing url' });
         if (!isValidUrl(req.query.url)) return res.status(403).json({ error: 'Invalid or forbidden URL' });
-        const imgRes = await axios.get(req.query.url, { responseType: 'arraybuffer', headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const imgRes = await axios.get(req.query.url, { responseType: 'arraybuffer', headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://shahiid-anime.net/' } });
         res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/jpeg');
         return res.send(Buffer.from(imgRes.data));
       }
