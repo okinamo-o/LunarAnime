@@ -191,26 +191,28 @@ export async function getDetails(slug) {
 
     if (isEpisodePage) {
       const $ep = load(data);
-      let seriesUrl = '';
+      // Collect ALL candidate parent links, then pick the first with a valid slug
+      const candidateLinks = [];
       $ep('a').each((i, el) => {
         const href = $ep(el).attr('href') || '';
-        if ((href.includes('/series/') || href.includes('/seasons/') || href.includes('/anime/') || href.includes('/seriesDubbed/') || href.includes('/seasonsDubbed/')) &&
-            !href.endsWith('/series/') && !href.endsWith('/anime/') && !href.endsWith('/seasons/') &&
-            !href.includes('series_years')) {
-          if (!seriesUrl) seriesUrl = href;
+        // Must contain a category path segment and NOT be a bare category listing
+        const match = href.match(/\/(series|seasons|anime|seriesDubbed|seasonsDubbed)\/([^/]+)\/?$/);
+        if (match && match[2] && !href.includes('series_years') && !href.includes('myanimelist')) {
+          candidateLinks.push({ href, category: match[1], slug: match[2] });
         }
       });
       
-      if (seriesUrl) {
-        const match = seriesUrl.match(/\/(series|seasons|anime|seriesDubbed|seasonsDubbed)\/([^/]+)\/?$/);
-        if (match && match[2]) {
-          const parentDetails = await getDetails(match[2]);
-          const epNumMatch = slug.match(/ep-?(\d+)/i) || slug.match(/%d8%a7%d9%84%d8%ad%d9%84%d9%82%d8%a9-?(\d+)/i);
-          if (epNumMatch) {
-            parentDetails.requestedEpisode = parseInt(epNumMatch[1], 10);
-          }
-          return parentDetails;
+      if (candidateLinks.length > 0) {
+        // Prefer /seasons/ links (direct parent), then /series/
+        const preferred = candidateLinks.find(c => c.category === 'seasons') ||
+                          candidateLinks.find(c => c.category === 'series') ||
+                          candidateLinks[0];
+        const parentDetails = await getDetails(preferred.slug);
+        const epNumMatch = slug.match(/ep-?(\d+)/i) || slug.match(/%d8%a7%d9%84%d8%ad%d9%84%d9%82%d8%a9-?(\d+)/i);
+        if (epNumMatch) {
+          parentDetails.requestedEpisode = parseInt(epNumMatch[1], 10);
         }
+        return parentDetails;
       }
       throw new Error('Anime not found');
     }
