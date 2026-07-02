@@ -6,16 +6,6 @@ const { JWT_SECRET, protect } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Helper to set cookie
-const setTokenCookie = (res, token) => {
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  });
-};
-
 // Rate limiters to prevent brute-force attacks
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -42,8 +32,8 @@ router.post('/register', registerLimiter, async (req, res) => {
     if (!username || !email || !password) {
       return res.status(400).json({ message: 'جميع الحقول مطلوبة' });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' });
+    if (password.length < 6 || password.length > 128) {
+      return res.status(400).json({ message: 'كلمة المرور يجب أن تكون بين 6 و 128 حرفاً' });
     }
     if (username.length < 3 || username.length > 30) {
       return res.status(400).json({ message: 'اسم المستخدم يجب أن يكون بين 3 و 30 حرفاً' });
@@ -55,7 +45,6 @@ router.post('/register', registerLimiter, async (req, res) => {
     
     // Convert _id to string to ensure JWT compatibility
     const token = generateToken(user._id.toString());
-    setTokenCookie(res, token);
 
     res.status(201).json({
       _id: user._id,
@@ -89,7 +78,6 @@ router.post('/login', loginLimiter, async (req, res) => {
     
     if (user && (await user.matchPassword(password))) {
       const token = generateToken(user._id.toString());
-      setTokenCookie(res, token);
       
       res.json({
         _id: user._id,
@@ -119,12 +107,6 @@ router.get('/me', protect, async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
-  res.cookie('token', 'none', {
-    expires: new Date(0),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-  });
   res.status(200).json({ success: true, message: 'تم تسجيل الخروج بنجاح' });
 });
 

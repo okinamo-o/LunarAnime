@@ -1,40 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const anime4upScraper = require('../services/anime4upScraper');
-const { resolveLauncherStream, getSubtitleAsVtt } = require('../services/launcherResolver');
 const axios = require('axios');
+const { getSubtitleAsVtt } = require('../services/launcherResolver');
+
+let scrapersPromise = import('../../client/api/_lib/scrapers.js');
+
+async function getScrapers() {
+  return await scrapersPromise;
+}
 
 // Helper to validate URLs to prevent SSRF
 function isValidUrl(urlString) {
   try {
     const url = new URL(urlString);
-    
-    // Only allow HTTP/HTTPS
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
-    
     const hostname = url.hostname;
-    
-    // Block internal network access (SSRF protection)
     if (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '::1' ||
-      hostname.startsWith('10.') ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('169.254.') || // AWS Metadata
-      hostname.endsWith('.internal') ||
-      hostname.endsWith('.local')
-    ) {
-      return false;
-    }
-    
+      hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' ||
+      hostname.startsWith('10.') || hostname.startsWith('192.168.') ||
+      hostname.startsWith('169.254.') || hostname.endsWith('.internal') || hostname.endsWith('.local')
+    ) return false;
     return true;
   } catch (e) {
     return false;
   }
 }
 
-// Helper to rewrite relative HLS paths to absolute proxied paths
 function rewriteManifest(manifest, originalUrl, originalReferer, cookies = '') {
   const baseUrl = new URL(originalUrl);
   const baseDir = baseUrl.origin + baseUrl.pathname.split('/').slice(0, -1).join('/');
@@ -49,7 +40,6 @@ function rewriteManifest(manifest, originalUrl, originalReferer, cookies = '') {
       } else {
         absoluteUrl = `${baseDir}/${match}`;
       }
-      
       return `/api/proxy/vstream?url=${encodeURIComponent(absoluteUrl)}&referer=${encodeURIComponent(originalReferer)}&cookies=${encodeURIComponent(cookies)}`;
     } catch (err) {
       return match;
@@ -60,7 +50,8 @@ function rewriteManifest(manifest, originalUrl, originalReferer, cookies = '') {
 // GET /api/proxy/trending
 router.get(['/trending', '/anime/trending'], async (req, res) => {
   try {
-    const results = await anime4upScraper.fetchTrending();
+    const scrapers = await getScrapers();
+    const results = await scrapers.fetchTrending();
     res.json({ page: 1, results });
   } catch (error) {
     res.status(500).json({ error: 'Failed to scrape trending' });
@@ -70,7 +61,8 @@ router.get(['/trending', '/anime/trending'], async (req, res) => {
 // GET /api/proxy/popular/:type
 router.get('/popular/:type', async (req, res) => {
   try {
-    const results = await anime4upScraper.fetchPopular();
+    const scrapers = await getScrapers();
+    const results = await scrapers.fetchPopular();
     res.json({ page: 1, results });
   } catch (error) {
     res.status(500).json({ error: 'Failed to scrape popular' });
@@ -82,10 +74,9 @@ router.get('/search', async (req, res) => {
   try {
     const query = req.query.q || '';
     if (!query) return res.json({ page: 1, results: [] });
-    
-    const maxResults = 25;
-    const items = await anime4upScraper.search(query);
-    res.json({ page: 1, results: items.slice(0, maxResults) });
+    const scrapers = await getScrapers();
+    const items = await scrapers.search(query);
+    res.json({ page: 1, results: items.slice(0, 25) });
   } catch (error) {
     res.status(500).json({ error: 'Failed to search' });
   }
@@ -94,12 +85,11 @@ router.get('/search', async (req, res) => {
 // GET /api/proxy/details/anime/:id
 router.get(['/details/:type/:id', '/details/anime/:id'], async (req, res) => {
   try {
-    const slug = req.params.id;
-    const details = await anime4upScraper.getDetails(slug);
+    const scrapers = await getScrapers();
+    const details = await scrapers.getDetails(req.params.id);
     if (!details) return res.status(404).json({ error: 'Not found' });
     res.json(details);
   } catch (error) {
-    console.error(`[Proxy] Details Error (${req.params.id}):`, error);
     res.status(500).json({ error: 'Failed to scrape details' });
   }
 });
@@ -109,21 +99,11 @@ router.get('/launcher/:type/:id', async (req, res) => {
   try {
     const season = Number(req.query.season) || 1;
     const episode = Number(req.query.episode) || 1;
-    const cleanId = req.params.id;
-
-    const data = await resolveLauncherStream({
-      type: 'anime',
-      id: cleanId,
-      season,
-      episode
-    });
-
+    const scrapers = await getScrapers();
+    const data = await scrapers.resolveLauncherStream({ id: req.params.id, season, episode });
     res.json(data);
   } catch (error) {
-    res.status(502).json({
-      error: 'Failed to resolve launcher stream',
-      details: error.message
-    });
+    res.status(502).json({ error: 'Failed to resolve launcher stream', details: error.message });
   }
 });
 
@@ -262,11 +242,12 @@ router.get('/discover/:type', async (req, res) => {
   const { genre, page = 1 } = req.query;
   
   try {
+    const scrapers = await getScrapers();
     let items = [];
     if (genre) {
-      items = await anime4upScraper.discover('anime-genre', genre, Number(page));
+      items = await scrapers.discover('anime-genre', genre, Number(page));
     } else {
-      items = await anime4upScraper.discover('anime-type', 'tv2', Number(page));
+      items = await scrapers.discover('anime-type', 'tv2', Number(page));
     }
     
     res.json({ results: items });

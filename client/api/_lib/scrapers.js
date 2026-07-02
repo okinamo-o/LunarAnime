@@ -1,40 +1,53 @@
 import axios from 'axios';
 import { load } from 'cheerio';
 
-const ANIMELEK_URL = 'https://animelek.top';
-const ANIME4UP_URL = 'https://w1.anime4up.rest';
+const BASE_URL = 'https://w1.anime4up.rest';
 
 const DEFAULT_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'Accept-Language': 'ar,en-US;q=0.9,en;q=0.8',
+  'Referer': 'https://w1.anime4up.rest/',
+  'DNT': '1',
+  'Connection': 'keep-alive',
+  'Upgrade-Insecure-Requests': '1',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Sec-Fetch-User': '?1',
+  'Cache-Control': 'max-age=0'
 };
 
-// ==========================================
-// ANIMELEK METADATA SCRAPING (Option A)
-// ==========================================
+const detailsCache = new Map();
+let _homeCache = { data: null, timestamp: 0 };
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
-function parseAnimelekGrid(html) {
+function parseAnimeGrid(html) {
   const $ = load(html);
   const results = [];
 
-  $('.anime-card, .anime-card-container').each((i, el) => {
-    const title = $(el).find('h3').text().trim() || $(el).find('.title').text().trim() || $(el).find('img').attr('alt');
+  $('.anime-card-themex').each((i, el) => {
+    const title = $(el).find('h3 a').text().trim() || $(el).find('.anime-card-title').text().trim();
     if (!title) return;
 
-    let link = $(el).find('a').attr('href') || '';
-    if (!link.startsWith('http')) link = `${ANIMELEK_URL}${link}`;
+    let link = $(el).find('.overlay').attr('href') || $(el).find('h3 a').attr('href') || '';
+    if (link.startsWith('/')) {
+      link = `${BASE_URL}${link}`;
+    }
 
-    let img = $(el).find('img').attr('src') || $(el).find('img').attr('data-src') || '';
+    let img = $(el).find('img').attr('data-image') || $(el).find('img').attr('src') || '';
+    img = String(img).split('?')[0].trim();
+    img = img.replace(/-(\d+x\d+)\.(webp|jpg|png|jpeg)$/i, '.$2');
+    if (img.startsWith('/')) img = `${BASE_URL}${img}`;
     
-    // Extract slug from link
+    const isEpisode = link.includes('/episode/');
     let slug = '';
-    const match = link.match(/\/anime\/([^/]+)/);
-    if (match) slug = match[1];
-
+    const match = link.match(/\/(anime|episode)\/([^\/]+)/);
+    if (match) slug = match[2];
     if (!slug) return;
 
-    let type = $(el).find('.type').text().trim() || 'Anime';
+    let type = $(el).find('.anime-card-type').text().trim();
+    if (!type) type = isEpisode ? 'Episode' : 'Anime';
 
     results.push({
       id: slug,
@@ -48,229 +61,181 @@ function parseAnimelekGrid(html) {
   return results;
 }
 
-async function formatItemsAndFillPosters(items) {
-  for (let item of items) {
-    // Clean messy titles from Animelek (e.g. "انمي One Piece مترجم" -> "One Piece")
-    item.title = item.title.replace(/مشاهدة|انمي|مترجمة|مترجم|اون\s*لاين/g, '').replace(/الحلقة\s*\d+/g, '').trim();
-
-    // Fetch missing posters from Jikan API
-    if (!item.poster || item.poster.includes('default.png') || item.poster.includes('default.jpg')) {
-      try {
-        const { data } = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(item.title)}&limit=1`, { timeout: 2000 });
-        if (data && data.data && data.data.length > 0) {
-          item.poster = data.data[0].images.jpg.large_image_url;
-        }
-        await new Promise(r => setTimeout(r, 350)); // Respect Jikan rate limits
-      } catch (e) {}
-    }
+async function _fetchHomePage() {
+  const now = Date.now();
+  if (_homeCache.data && (now - _homeCache.timestamp) < CACHE_TTL) {
+    return _homeCache.data;
   }
-  return items;
+  const { data } = await axios.get(BASE_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
+  const results = parseAnimeGrid(data);
+  _homeCache = { data: results, timestamp: now };
+  return results;
 }
 
 export async function fetchTrending() {
-  // Use most viewed anime for Trending
-  const { data } = await axios.get(`${ANIMELEK_URL}/%D9%82%D8%A7%D8%A6%D9%85%D8%A9-%D8%A7%D9%84%D8%A3%D9%86%D9%85%D9%8A/?order=views`, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  return await formatItemsAndFillPosters(parseAnimelekGrid(data).slice(0, 15));
+  try {
+    const results = await _fetchHomePage();
+    return results.slice(0, 15);
+  } catch (err) {
+    console.error('Trending Error:', err.message);
+    throw err;
+  }
 }
 
 export async function fetchPopular() {
-  const { data } = await axios.get(`${ANIMELEK_URL}/قائمة-الأنمي/`, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  return await formatItemsAndFillPosters(parseAnimelekGrid(data).slice(0, 15));
+  try {
+    const results = await _fetchHomePage();
+    if (results.length > 15) return results.slice(15, 30);
+    return results;
+  } catch (err) {
+    console.error('Popular Error:', err.message);
+    throw err;
+  }
 }
 
 export async function fetchLatestEpisodes() {
-  // Homepage contains the latest episodes
-  const { data } = await axios.get(ANIMELEK_URL, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  const results = parseAnimelekGrid(data);
-  return await formatItemsAndFillPosters(results.slice(0, 15));
+  try {
+    const results = await _fetchHomePage();
+    // Return items that are episodes, or just the first few if all are mixed
+    const eps = results.filter(r => r.releaseDate === 'Episode');
+    return eps.length > 0 ? eps.slice(0, 15) : results.slice(0, 15);
+  } catch (err) {
+    console.error('Latest Episodes Error:', err.message);
+    throw err;
+  }
 }
 
 export async function search(query) {
-  const url = `${ANIMELEK_URL}/?s=${encodeURIComponent(query)}`;
-  const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  return await formatItemsAndFillPosters(parseAnimelekGrid(data));
+  try {
+    const url = `${BASE_URL}/?search_param=animes&s=${encodeURIComponent(query)}`;
+    const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
+    return parseAnimeGrid(data);
+  } catch (err) {
+    console.error('Search Error:', err.message);
+    throw err;
+  }
 }
 
 export async function discover(category, slugString, page = 1) {
-  // Animelek uses /anime-genre/genre-name
-  let url = `${ANIMELEK_URL}/anime-genre/${encodeURIComponent(slugString)}/`;
-  if (page > 1) url += `page/${page}/`;
-  const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  return await formatItemsAndFillPosters(parseAnimelekGrid(data));
+  try {
+    const slugs = String(slugString).split(',');
+    let url = `${BASE_URL}/${category}/${slugs[0]}/`;
+    if (page > 1) url += `?page=${page}`;
+    const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
+    return parseAnimeGrid(data);
+  } catch (err) {
+    console.error('Discover Error:', err.message);
+    throw err;
+  }
 }
 
 export async function getDetails(slug) {
-  const url = `${ANIMELEK_URL}/anime/${slug}/`;
-  const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
-  const $ = load(data);
-
-  const rawTitle = $('h1').first().text().trim() || slug;
-  const title = rawTitle.replace(/مشاهدة|انمي|مترجمة|مترجم|اون\s*لاين/g, '').replace(/الحلقة\s*\d+/g, '').trim();
-  let poster = $('.anime-poster img').attr('src') || $('.image img').attr('src') || '';
-  
-  if (!poster || poster.includes('default.png') || poster.includes('default.jpg')) {
-    try {
-      const { data: jikanData } = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`, { timeout: 2000 });
-      if (jikanData && jikanData.data && jikanData.data.length > 0) {
-        poster = jikanData.data[0].images.jpg.large_image_url;
-      }
-    } catch (e) {}
+  if (detailsCache.has(slug)) {
+    const cached = detailsCache.get(slug);
+    if (Date.now() - cached.timestamp < CACHE_TTL) return cached.data;
   }
-  const overview = $('.story p').text().trim() || $('.anime-story').text().trim() || $('.anime-details .content p, .media-box .content p').first().text().trim() || 'لا توجد قصة متاحة.';
 
-  // Extract episodes from Animelek
-  const eps = [];
-  $('a[href*="/episode/"]').each((i, el) => {
-    const epLink = $(el).attr('href') || '';
-    const rawSlug = epLink.match(/\/episode\/([^/]+)/);
-    if (!rawSlug) return;
-    
-    let epNum = null;
-    const epText = $(el).text().trim();
-    const numMatch = epText.match(/\b\d+\b/);
-    if (numMatch) {
-      epNum = parseInt(numMatch[0], 10);
-    } else {
-      const decoded = decodeURIComponent(rawSlug[1]);
-      const trailingNum = decoded.match(/-(\d+)\/?$/);
-      if (trailingNum) epNum = parseInt(trailingNum[1], 10);
-    }
-
-    if (epNum && !eps.some(e => e.episodeNumber === epNum)) {
-      eps.push({ episodeNumber: epNum, id: rawSlug[1], url: epLink });
-    }
-  });
-
-  eps.sort((a, b) => a.episodeNumber - b.episodeNumber);
-
-  // Fallback: If Jikan says there are more episodes, fill in the gaps!
-  let jikanTotal = 0;
-  if (!poster || poster.includes('default.png') || poster.includes('default.jpg')) {
-     // We already fetched Jikan, but let's re-use or fetch it just for episodes
-     // Actually, let's just fetch it explicitly for episodes if Animelek returned very few episodes
-  }
-  
   try {
-     const { data: jData } = await axios.get(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(title)}&limit=1`, { timeout: 2000 });
-     if (jData && jData.data && jData.data.length > 0) {
-        jikanTotal = jData.data[0].episodes || 0;
-     }
-  } catch (e) {}
+    const url = `${BASE_URL}/anime/${slug}`;
+    const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
+    const $ = load(data);
 
-  if (jikanTotal > eps.length) {
-    const existingNums = new Set(eps.map(e => e.episodeNumber));
-    for (let i = 1; i <= jikanTotal; i++) {
-       if (!existingNums.has(i)) {
-          eps.push({
-             episodeNumber: i,
-             id: `fallback-${i}`,
-             url: 'anime4up-fallback' // Special flag
-          });
-       }
-    }
-    // Re-sort after adding missing ones
+    const title = $('.anime-details-title').text().trim() || $('h1').first().text().trim();
+    let poster = $('.anime-thumbnail img').attr('src') || $('.img-responsive').attr('src') || '';
+    poster = String(poster).split('?')[0].trim().replace(/-(\d+x\d+)\.(webp|jpg|png|jpeg)$/i, '.$2');
+
+    const overview = $('.anime-story').text().trim() || $('.story').text().trim() || 'لا توجد قصة متاحة.';
+    
+    const eps = [];
+    $('a').each((i, el) => {
+      const epLink = $(el).attr('href') || '';
+      const epMatch = epLink.match(/\/episode\/([^\/]+)/);
+      if (!epMatch) return;
+      
+      const rawSlug = epMatch[1];
+      let epNum = null;
+      
+      const epText = $(el).text().trim();
+      const numMatch = epText.match(/\b\d+\b/);
+      if (numMatch && !epText.toLowerCase().includes(title.toLowerCase())) {
+        epNum = parseInt(numMatch[0], 10);
+      }
+      if (!epNum) {
+        const decoded = decodeURIComponent(rawSlug);
+        const trailingNum = decoded.match(/-(\d+)\/?$/);
+        if (trailingNum) epNum = parseInt(trailingNum[1], 10);
+      }
+      if (epNum && !eps.some(e => e.episodeNumber === epNum)) {
+        eps.push({ episodeNumber: epNum, id: rawSlug, url: epLink });
+      }
+    });
+
     eps.sort((a, b) => a.episodeNumber - b.episodeNumber);
+
+    const genres = [];
+    $('a[href*="/anime-genre/"]').each((i, el) => {
+      const g = $(el).text().trim();
+      if (g && !genres.includes(g)) genres.push(g);
+    });
+
+    const result = {
+      id: slug, title, poster, backdrop: poster, overview, type: 'anime', genres,
+      seasons: [{ seasonNumber: 1, episodes: eps }]
+    };
+    detailsCache.set(slug, { data: result, timestamp: Date.now() });
+    return result;
+  } catch (err) {
+    console.error('Details Error:', err.message);
+    throw new Error('Failed to scrape anime details.');
   }
-
-  const genres = [];
-  $('.anime-genres a, .genres a').each((i, el) => {
-    const g = $(el).text().trim();
-    if (g && !genres.includes(g)) genres.push(g);
-  });
-
-  return {
-    id: slug,
-    title,
-    poster,
-    backdrop: poster,
-    overview,
-    type: 'anime',
-    genres,
-    seasons: [{ seasonNumber: 1, episodes: eps }]
-  };
 }
 
-// ==========================================
-// ANIME4UP VIDEO EXTRACTION 
-// ==========================================
-// Since Animelek hides iframe links in JS, we fall back to Anime4up just for the video player extraction as requested.
-
 export async function resolveLauncherStream({ id, episode }) {
-  const details = await getDetails(id);
-  const epObj = details.seasons[0].episodes.find(e => e.episodeNumber == episode || e.id == episode || decodeURIComponent(e.id) == decodeURIComponent(episode));
-  
-  if (!epObj) {
-    throw new Error('Episode not found on video server');
+  // `episode` is the slug we provided in getDetails.
+  let url = `${BASE_URL}/episode/${episode}/`;
+  if (!episode || typeof episode === 'number') {
+    url = `${BASE_URL}/episode/${id}-%D8%A7%D9%84%D8%AD%D9%84%D9%82%D8%A9-${episode}/`;
   }
-  
-  let epUrl = epObj.url;
-  let htmlData = '';
 
-  if (epUrl === 'anime4up-fallback') {
-     // Animelek is missing this episode! Fallback to Anime4up.
-     const searchUrl = `${ANIME4UP_URL}/?search_param=animes&s=${encodeURIComponent(details.title)}`;
-     const { data: searchData } = await axios.get(searchUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
-     const $s = load(searchData);
-     
-     // Get first result link
-     const a4upLink = $s('.anime-card-container a, .anime-card a, .anime-card-details a').first().attr('href');
-     if (!a4upLink) throw new Error('Anime not found on Anime4Up');
-     
-     // Fetch Anime4Up details page
-     const { data: a4upDetails } = await axios.get(a4upLink, { headers: DEFAULT_HEADERS, timeout: 10000 });
-     const $d = load(a4upDetails);
-     
-     // Find the exact episode link
-     let foundA4upEp = '';
-     $d('a[href*="/episode/"]').each((i, el) => {
-        const text = $d(el).text().trim();
-        const numMatch = text.match(/\b\d+\b/);
-        
-        let urlEpNum = null;
-        const decodedUrl = decodeURIComponent($d(el).attr('href'));
-        const urlMatch = decodedUrl.match(/الحلقة-(\d+)/);
-        if (urlMatch) urlEpNum = parseInt(urlMatch[1], 10);
-
-        if ((numMatch && parseInt(numMatch[0], 10) == episode) || urlEpNum == episode) {
-           foundA4upEp = $d(el).attr('href');
-        }
-     });
-     
-     if (!foundA4upEp) throw new Error('Episode not found on Anime4Up either');
-     
-     epUrl = foundA4upEp;
-     const { data } = await axios.get(epUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
-     htmlData = data;
-  } else {
-     // Standard Animelek fetch
-     const { data } = await axios.get(epUrl, { headers: DEFAULT_HEADERS, timeout: 10000 });
-     htmlData = data;
-  }
-  
+  const { data } = await axios.get(url, { headers: DEFAULT_HEADERS, timeout: 10000 });
+  const $ = load(data);
   const iframes = [];
-  
-  // Animelek embeds video players using card.php?random=URL
-  const regex = /https?:\/\/[^\s"'<>]+\/card\.php\?random=(https?:\/\/[^\s"'<>&]+)/ig;
-  let match;
-  while ((match = regex.exec(htmlData)) !== null) {
-    iframes.push(decodeURIComponent(match[1]));
-  }
-  
-  // Fallback: look for direct iframes in the HTML (Animelek & Anime4Up both do this sometimes)
-  const $ep = load(htmlData);
-  $ep('iframe').each((i, el) => {
-    const src = $ep(el).attr('src');
+
+  $('iframe').each((i, el) => {
+    const src = $(el).attr('src');
     if (src && /share4max|vkvideo|mega|dood|voe|videa|mp4upload|file-upload/.test(src)) {
       iframes.push(src);
     }
   });
 
+  $('ul.ep-servers li').each((i, el) => {
+    const b64 = $(el).attr('data-ep-url');
+    if (b64) {
+      try {
+        const decoded = Buffer.from(b64, 'base64').toString('ascii');
+        iframes.push(decoded);
+      } catch (e) {}
+    }
+  });
+
   const unique = [...new Set(iframes)].sort((a, b) => {
-    const score = (url) => url.includes('share4max') ? 10 : url.includes('mega') ? 5 : 0;
+    const score = (u) => u.includes('share4max') ? 10 : u.includes('mega') ? 5 : 0;
     return score(b) - score(a);
   });
 
   if (!unique.length) throw new Error('No compatible servers');
 
-  return { masterUrl: unique[0], isEmbed: true, subtitles: [] };
+  // Format into a structured server list
+  const servers = unique.map((url, i) => {
+    let name = 'Server ' + (i + 1);
+    if (url.includes('share4max')) name = 'Share4Max';
+    else if (url.includes('mega')) name = 'Mega';
+    else if (url.includes('dood')) name = 'DoodStream';
+    else if (url.includes('videa')) name = 'Videa';
+    else if (url.includes('voe')) name = 'Voe';
+    
+    return { name, url, quality: 'Auto' };
+  });
+
+  return { masterUrl: servers[0].url, isEmbed: true, servers, subtitles: [] };
 }

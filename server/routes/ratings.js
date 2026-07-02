@@ -20,6 +20,11 @@ router.get('/:animeId', protect, async (req, res) => {
 // POST /api/ratings — create or update rating
 router.post('/', protect, async (req, res) => {
   const { animeId, rating } = req.body;
+  
+  if (typeof rating !== 'number' || rating < 0 || rating > 10) {
+    return res.status(400).json({ message: 'Rating must be a number between 0 and 10' });
+  }
+
   try {
     const existing = await Rating.findOne({ userId: req.user._id, animeId });
     if (existing) {

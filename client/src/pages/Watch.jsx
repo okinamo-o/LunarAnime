@@ -62,7 +62,8 @@ export default function Watch() {
       }
     }
     loadDetails()
-  }, [type, id, user, searchParams])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, id, user])
 
 
   useEffect(() => {
@@ -126,7 +127,11 @@ export default function Watch() {
     }
     
     setSearchParams({ s: season, e: episode }, { replace: true })
-    saveProgress()
+    const debounceTimer = setTimeout(() => {
+      saveProgress()
+    }, 1000)
+    
+    return () => clearTimeout(debounceTimer)
   }, [season, episode, type, id, user, details, setSearchParams, loading])
 
   const title = details?.title || details?.name || 'جاري التحميل...'

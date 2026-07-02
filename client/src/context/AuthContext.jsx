@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { getMe, logoutUser } from '../api/backend';
 
 const AuthContext = createContext(null);
@@ -32,21 +32,25 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('lunar_unauthorized', handleUnauthorized);
   }, []);
 
-  const login = (userData) => {
+  const login = useCallback((userData) => {
     setUser(userData);
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await logoutUser();
     } catch (e) {
       console.warn('Logout request failed', e);
     }
     setUser(null);
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    user, login, logout, loading
+  }), [user, login, logout, loading]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

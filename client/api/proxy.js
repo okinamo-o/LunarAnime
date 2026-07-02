@@ -2,6 +2,23 @@
 import * as scrapers from './_lib/scrapers.js';
 import axios from 'axios';
 
+// Helper to validate URLs to prevent SSRF
+function isValidUrl(urlString) {
+  try {
+    const url = new URL(urlString);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+    const hostname = url.hostname;
+    if (
+      hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' ||
+      hostname.startsWith('10.') || hostname.startsWith('192.168.') ||
+      hostname.startsWith('169.254.') || hostname.endsWith('.internal') || hostname.endsWith('.local')
+    ) return false;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
   const { action, q, id, episode, category, slug, page } = req.query;
 
@@ -31,11 +48,15 @@ export default async function handler(req, res) {
         result = await scrapers.resolveLauncherStream({ id, episode });
         break;
       case 'image': {
+        if (!req.query.url) return res.status(400).json({ error: 'Missing url' });
+        if (!isValidUrl(req.query.url)) return res.status(403).json({ error: 'Invalid or forbidden URL' });
         const imgRes = await axios.get(req.query.url, { responseType: 'arraybuffer', headers: { 'User-Agent': 'Mozilla/5.0' } });
         res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/jpeg');
         return res.send(Buffer.from(imgRes.data));
       }
       case 'subtitle': {
+        if (!req.query.url) return res.status(400).json({ error: 'Missing url' });
+        if (!isValidUrl(req.query.url)) return res.status(403).json({ error: 'Invalid or forbidden URL' });
         const subRes = await axios.get(req.query.url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         res.setHeader('Content-Type', 'text/vtt');
         return res.send(subRes.data);
