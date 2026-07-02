@@ -40,18 +40,22 @@ export default function Watch() {
         const data = await getDetails(type, id)
         setDetails(data)
         
-        // If no season/episode in URL, check user's watchlist for progress
-        if (user && !searchParams.get('s') && !searchParams.get('e')) {
-          try {
-            const watchlist = await getWatchlist()
-            const item = watchlist.find(i => i.animeId === id)
-            if (item?.lastSeason) {
-               setSeason(item.lastSeason)
-               if (item.lastEpisode) setEpisode(item.lastEpisode)
-               if (item.watchedEpisodesList) setWatchedEpisodes(item.watchedEpisodesList)
+        // If no season/episode in URL, use requestedEpisode from slug or check user's watchlist
+        if (!searchParams.get('s') && !searchParams.get('e')) {
+          if (data.requestedEpisode) {
+            setEpisode(data.requestedEpisode)
+          } else if (user) {
+            try {
+              const watchlist = await getWatchlist()
+              const item = watchlist.find(i => i.animeId === id)
+              if (item?.lastSeason) {
+                 setSeason(item.lastSeason)
+                 if (item.lastEpisode) setEpisode(item.lastEpisode)
+                 if (item.watchedEpisodesList) setWatchedEpisodes(item.watchedEpisodesList)
+              }
+            } catch (pErr) {
+              console.warn('Failed to load progress:', pErr)
             }
-          } catch (pErr) {
-            console.warn('Failed to load progress:', pErr)
           }
         }
       } catch (err) {

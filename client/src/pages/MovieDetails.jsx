@@ -150,7 +150,7 @@ export default function MovieDetails() {
 
             {/* Actions */}
             <div className="details-page__actions" style={{ justifyContent: 'flex-start', gap: '12px' }}>
-              <Link to={`/watch/anime/${id}`} className="btn-primary" style={{ flexDirection: 'row-reverse', gap: '8px' }}>
+              <Link to={`/watch/anime/${id}${details.requestedEpisode ? `?s=1&e=${details.requestedEpisode}` : ''}`} className="btn-primary" style={{ flexDirection: 'row-reverse', gap: '8px' }}>
                 شاهد الآن <Play size={18} fill="white" />
               </Link>
               {user && (
@@ -170,7 +170,7 @@ export default function MovieDetails() {
           <div className="details-page__seasons" style={{ textAlign: 'right' }}>
             <EpisodeBrowser
               episodes={episodes}
-              currentEpisode={0}
+              currentEpisode={details.requestedEpisode || 0}
               onSelect={(epNum) => navigate(`/watch/anime/${id}?s=1&e=${epNum}`)}
             />
           </div>

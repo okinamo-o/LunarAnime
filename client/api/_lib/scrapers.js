@@ -173,17 +173,47 @@ export async function getDetails(slug) {
   try {
     // Try /series/ first (main anime page), then /seasons/ (individual season), then /anime/ (movie)
     let data, detailUrl;
-    for (const prefix of ['series', 'seasons', 'anime', 'seriesDubbed', 'seasonsDubbed']) {
+    let isEpisodePage = false;
+    for (const prefix of ['series', 'seasons', 'anime', 'seriesDubbed', 'seasonsDubbed', 'episodes']) {
       try {
         detailUrl = `${BASE_URL}/${prefix}/${slug}/`;
         const resp = await axios.get(detailUrl, { headers: DEFAULT_HEADERS, timeout: 15000 });
         data = resp.data;
+        if (prefix === 'episodes') {
+          isEpisodePage = true;
+        }
         break;
       } catch (e) {
         if (e.response?.status !== 404) throw e;
       }
     }
     if (!data) throw new Error('Anime not found');
+
+    if (isEpisodePage) {
+      const $ep = load(data);
+      let seriesUrl = '';
+      $ep('a').each((i, el) => {
+        const href = $ep(el).attr('href') || '';
+        if ((href.includes('/series/') || href.includes('/seasons/') || href.includes('/anime/') || href.includes('/seriesDubbed/') || href.includes('/seasonsDubbed/')) &&
+            !href.endsWith('/series/') && !href.endsWith('/anime/') && !href.endsWith('/seasons/') &&
+            !href.includes('series_years')) {
+          if (!seriesUrl) seriesUrl = href;
+        }
+      });
+      
+      if (seriesUrl) {
+        const match = seriesUrl.match(/\/(series|seasons|anime|seriesDubbed|seasonsDubbed)\/([^/]+)\/?$/);
+        if (match && match[2]) {
+          const parentDetails = await getDetails(match[2]);
+          const epNumMatch = slug.match(/ep-?(\d+)/i) || slug.match(/%d8%a7%d9%84%d8%ad%d9%84%d9%82%d8%a9-?(\d+)/i);
+          if (epNumMatch) {
+            parentDetails.requestedEpisode = parseInt(epNumMatch[1], 10);
+          }
+          return parentDetails;
+        }
+      }
+      throw new Error('Anime not found');
+    }
 
     const $ = load(data);
 
